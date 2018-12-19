@@ -7,5 +7,8 @@ def norm_Frobenius(A, B):
 
 
 def divergence_KullbackLeible(A, B):
-    d = np.sum(A * np.log(A / B) - A + B)
+    B[B == 0] = 1e-6
+    AdivB = A / B
+    AdivB[AdivB == 0] = 1e-6
+    d = np.sum(A * np.log(AdivB) - A + B)
     return d
