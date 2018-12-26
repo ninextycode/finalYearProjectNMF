@@ -1,8 +1,6 @@
 import numpy as np
 from nmf.norms import norm_Frobenius
 
-# print = lambda *X: None
-
 def factorise_Fnorm_subproblems_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
                     record_errors=False, W_init=None, H_init=None):
 
@@ -140,8 +138,14 @@ def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
     else:
         H = H_init
 
-    err = norm_Frobenius(V - W @ H)
-    errors = [err]
+    # Given any random initial (W, H), very often after
+    # the first iteration W^2 = 0 and H^2 = 0 cause the algorithm to stop.
+    # The solution (0, 0) is a useless stationary point
+    # A simple remedy is to find a new initial point (W1, H1)
+    # so that f(W1, H1) < f(0, 0).
+    # We can solve it by picking a better initial W and H,
+    # one step is enough to get a good enough starting point
+    W, H = factorise_Fnorm_subproblems_pgrad(V, inner_dim, n_steps=1, W_init=W, H_init=H)
 
     HVt = H @ V.T
     HHt = H @ H.T
@@ -150,8 +154,11 @@ def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
 
     dFWt = dFnorm_H(HVt, HHt, W.T)
     dFH = dFnorm_H(WtV, WtW, H)
-    dFpWt = dFnorm_H_projected(dFWt, W)
+    dFpWt = dFnorm_H_projected(dFWt, W.T)
     dFpH = dFnorm_H_projected(dFH, H)
+
+    err = norm_Frobenius(V - W @ H)
+    errors = [err]
 
     pgrad_norm = norm_Frobenius(np.hstack([dFpWt, dFpH]))
     min_pgrad_main = epsiolon * pgrad_norm
@@ -162,7 +169,7 @@ def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
             break
 
         W, H, alpha = pgd_global_step(V, W, H, dFWt.T, dFH, alpha)
-        print(alpha)
+
         err = norm_Frobenius(V - W @ H)
         if record_errors:
             errors.append(err)
@@ -192,7 +199,6 @@ def pgd_global_step(V, W, H, dFW, dFH, start_alpha,
 
     W_new, H_new = project(W - alpha * dFW), project(H - alpha * dFH)
     C = pgd_global_step_condition(V, (W, H), (W_new, H_new), dFW, dFH)
-    print("C", C)
 
     should_increase = C <= 0
 
@@ -205,7 +211,6 @@ def pgd_global_step(V, W, H, dFW, dFH, start_alpha,
         W_prev, H_prev = W_new, H_new
         W_new, H_new = project(W - alpha * dFW), project(H - alpha * dFH)
         C = pgd_global_step_condition(V, (W, H), (W_new, H_new), dFW, dFH)
-        print("C", C)
 
         if should_increase:
             if not C <= 0 or ((H_prev == H_new).all() and (W_prev == W_new).all()):
@@ -223,8 +228,8 @@ def pgd_global_step_condition(V, WH_old, WH_new, df_W, df_H, sigma=0.01):
     W_old, H_old = WH_old
     W_new, H_new = WH_new
 
-    f_old = norm_Frobenius(V - W_old @ H_old)
-    f_new = norm_Frobenius(V - W_new @ H_new)
+    f_old = 1/2 * np.sum((V - W_old @ H_old) ** 2)
+    f_new = 1/2 * np.sum((V - W_new @ H_new) ** 2)
 
     dW = W_new - W_old
     dH = H_new - H_old

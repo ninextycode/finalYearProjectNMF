@@ -47,9 +47,7 @@ W, H, errors2 = nmf.pgrad.factorise_Fnorm_subproblems_pgrad(A, inner_dim, record
                                           H_init=H_init.copy())
 
 W, H, errors3 = nmf.pgrad.factorise_Fnorm_direct_pgrad(A, inner_dim, record_errors=True,
-                                          n_steps=1000, epsiolon=0,
-                                          W_init=W_init.copy(),
-                                          H_init=H_init.copy())
+                                          n_steps=1000, epsiolon=0)
 
 print(W @ H)
 
