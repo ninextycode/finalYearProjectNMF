@@ -4,18 +4,24 @@ import nmf.norms
 import numpy as np
 
 
-def factorise_Fnorm(V, inner_dim, n_steps=10000, min_err=1e-6, record_errors=False):
+def factorise_Fnorm(V, inner_dim, n_steps=10000, min_err=1e-6,
+                    record_errors=False, W_init=None, H_init=None):
     return factorise(V, inner_dim, n_steps, min_err, record_errors,
                      update_first=update_first_Fnorm,
                      update_second=update_second_Fnorm,
-                     error=nmf.norms.norm_Frobenius)
+                     error=lambda A, B: nmf.norms.norm_Frobenius(A-B),
+                     W_init=W_init,
+                     H_init=H_init)
 
 
-def factorise_KLdiv(V, inner_dim, n_steps=10000, min_err=1e-6, record_errors=False):
+def factorise_KLdiv(V, inner_dim, n_steps=10000, min_err=1e-6, record_errors=False,
+                    W_init=None, H_init=None):
     return factorise(V, inner_dim, n_steps, min_err, record_errors,
                      update_first=update_first_KLdiv,
                      update_second=update_second_KLdiv,
-                     error=nmf.norms.divergence_KullbackLeible)
+                     error=nmf.norms.divergence_KullbackLeible,
+                     W_init=W_init,
+                     H_init=H_init)
 
 def update_first_Fnorm(V, W, H):
     VHt = V  @ H.T
@@ -56,24 +62,31 @@ def update_second_KLdiv(V, W, H):
 
 
 def factorise(V, inner_dim, n_steps, min_err, record_errors,
-              update_first, update_second, error):
-    W = 1 - np.random.rand(V.shape[0], inner_dim)
-    H = 1 - np.random.rand(inner_dim, V.shape[1])
-    errors = []
+              update_first, update_second, error, W_init, H_init):
+    if W_init is None:
+        W = 1 - np.random.rand(V.shape[0], inner_dim)
+    else:
+        W = W_init
+
+    if H_init is None:
+        H = 1 - np.random.rand(inner_dim, V.shape[1])
+    else:
+        H = H_init
+
+    err = error(V, W @ H)
+    errors = [err]
 
     for i in range(n_steps):
+        if err < min_err:
+            break
+
+        W = update_first(V, W, H)
+        H = update_second(V, W, H)
+
         err = error(V, W @ H)
         if record_errors:
             errors.append(err)
 
-        if err < min_err:
-            if record_errors:
-                return W, H, errors
-            else:
-                return W, H
-
-        W = update_first(V, W, H)
-        H = update_second(V, W, H)
 
     if record_errors:
         return W, H, np.array(errors)

@@ -1,8 +1,8 @@
 import numpy as np
 
 
-def norm_Frobenius(A, B):
-    f = np.sqrt( np.sum((A-B) ** 2))
+def norm_Frobenius(A):
+    f = np.sqrt(np.sum(A ** 2))
     return f
 
 
