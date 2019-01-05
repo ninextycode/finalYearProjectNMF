@@ -1,50 +1,44 @@
 import numpy as np
 from nmf.norms import norm_Frobenius
+from nmf.mult import update_empty_initials
+from time import process_time
 
-def factorise_Fnorm_subproblems_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
+
+def factorise_Fnorm_subproblems(V, inner_dim, n_steps=10000, epsiolon=1e-6,
                     record_errors=False, W_init=None, H_init=None):
+    W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
-    alpha_H = 1
-    alpha_W = 1
-
-    if W_init is None:
-        W = 1 - np.random.rand(V.shape[0], inner_dim)
-    else:
-        W = W_init
-
-    if H_init is None:
-        H = 1 - np.random.rand(inner_dim, V.shape[1])
-    else:
-        H = H_init
-
+    start_time = process_time()
     err = norm_Frobenius(V - W @ H)
-    errors = [err]
+    errors = [(err,  process_time() - start_time)]
 
     dFWt = dFnorm_H(H @ V.T, H @ H.T, W.T)
     dFH = dFnorm_H(W.T @ V, W.T @ W, H)
-    dFpWt = dFnorm_H_projected(dFWt, W)
-    dFpH = dFnorm_H_projected(dFH, H)
 
-    pgrad_norm = norm_Frobenius(np.hstack([dFpWt, dFpH]))
+    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+    norm_dFpH_2 = dH_projected_norm2(dFH, H)
+    pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+
     min_pgrad_main = epsiolon * pgrad_norm
     min_pgrad_W = max(1e-3, epsiolon) * pgrad_norm
     min_pgrad_H = min_pgrad_W
+
     for i in range(n_steps):
         if pgrad_norm < min_pgrad_main:
             break
 
-        W, alpha_W, min_pgrad_W, dFpWt = \
-            pgd_subproblem_H(V.T, H.T, W.T, alpha_W, min_pgrad_W)
+        W, min_pgrad_W, norm_dFpWt_2 = \
+            pgd_subproblem_H(V.T, H.T, W.T, min_pgrad_W)
         W = W.T
 
-        H, alpha_H, min_pgrad_H, dFpH = \
-            pgd_subproblem_H(V, W, H, alpha_H, min_pgrad_H)
+        H, min_pgrad_H, norm_dFpH_2 = \
+            pgd_subproblem_H(V, W, H, min_pgrad_H)
 
         err = norm_Frobenius(V - W @ H)
         if record_errors:
-            errors.append(err)
+            errors.append((err, process_time() - start_time))
 
-        pgrad_norm = norm_Frobenius(np.hstack([dFpWt, dFpH]))
+        pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
     if record_errors:
         return W, H, np.array(errors)
@@ -52,36 +46,37 @@ def factorise_Fnorm_subproblems_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6
         return W, H
 
 
-def pgd_subproblem_H(V, W, H, start_alpha, min_pgrad, n_maxiter=1000):
+def pgd_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
     H_new = H
-    alpha = start_alpha
+    alpha = 1
     WtV = W.T @ V
     WtW = W.T @ W
 
     dF = dFnorm_H(WtV, WtW, H)
-    dFpH = dFnorm_H_projected(dF, H)
-    if norm_Frobenius(dFpH) < min_pgrad:
-        return H_new, alpha, min_pgrad / 10, dFpH
+    norm_dFpH_2 = dH_projected_norm2(dF, H)
+    if np.sqrt(norm_dFpH_2) < min_pgrad:
+        return H_new, min_pgrad / 10, norm_dFpH_2
 
     for i in range(n_maxiter):
-        H_new, alpha = pgd_subproblem_step(WtV, WtW, H, dF, alpha)
+        H_new, alpha = pgd_subproblem_step(WtW, H, dF, alpha)
         H = H_new
         dF = dFnorm_H(WtV, WtW, H)
-        dFpH = dFnorm_H_projected(dF, H)
-        if norm_Frobenius(dFpH) < min_pgrad:
+        norm_dFpH_2 = dH_projected_norm2(dF, H)
+        if np.sqrt(norm_dFpH_2) < min_pgrad:
             break
-    return H_new, alpha, min_pgrad, dFpH
+    return H, min_pgrad, norm_dFpH_2
 
 
-def pgd_subproblem_step(WtV, WtW, H, dF, alpha,
+def pgd_subproblem_step(WtW, H, dF, alpha,
                         beta=0.1, max_alpha_search_iters=10):
+    max_a = beta ** -max_alpha_search_iters
+    min_a = beta ** max_alpha_search_iters
+    alpha = np.clip(alpha, min_a, max_a)
+
     H_new = project(H - alpha * dF)
     C = pgd_subproblem_step_condition(WtW, H, H_new, dF)
 
     should_increase = C <= 0
-    max_a = beta ** -max_alpha_search_iters
-    min_a = beta ** max_alpha_search_iters
-    alpha = np.clip(alpha, min_a, max_a)
 
     while max_a >= alpha >= min_a:
         if should_increase:
@@ -111,32 +106,40 @@ def pgd_subproblem_step_condition(WtW, H_old, H_new, dF, sigma=0.01):
     return C
 
 
+def pgd_subproblem_step_condition_not_simplified(V, W, H_old, H_new, dF, sigma=0.01):
+    f_old = 1/2 * np.sum((V - W @ H_old) ** 2)
+    f_new = 1/2 * np.sum((V - W @ H_new) ** 2)
+    d = H_new - H_old
+    C = (f_new - f_old) - sigma * np.sum(dF * d)
+    return C
+
 # Fnorm = || V - WH || ^ 2
 def dFnorm_H(WtV, WtW, H):
     return WtW @ H - WtV
 
 
-def dFnorm_H_projected(dF, H):
+def dKL_H(V, W, H):
+    WH = W @ H
+    return ((WH - V) / WH).T @ W
+
+
+def dH_projected(dF, H):
     dF = dF.copy()
     dF[H <= 0] = np.clip(dF[H <= 0], -np.inf, 0)
     return dF
 
+def dH_projected_norm2(dF, H):
+    return np.sum(dF[(H > 0) | (dF < 0)] ** 2)
+
+
 
 def project(A):
-    A = A.copy()
     return np.clip(A, 0, np.inf)
 
-def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
-                    record_errors=False, W_init=None, H_init=None):
-    if W_init is None:
-        W = 1 - np.random.rand(V.shape[0], inner_dim)
-    else:
-        W = W_init
 
-    if H_init is None:
-        H = 1 - np.random.rand(inner_dim, V.shape[1])
-    else:
-        H = H_init
+def factorise_Fnorm_direct(V, inner_dim, n_steps=10000, epsiolon=1e-6,
+                    record_errors=False, W_init=None, H_init=None):
+    W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     # Given any random initial (W, H), very often after
     # the first iteration W^2 = 0 and H^2 = 0 cause the algorithm to stop.
@@ -145,7 +148,7 @@ def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
     # so that f(W1, H1) < f(0, 0).
     # We can solve it by picking a better initial W and H,
     # one step is enough to get a good enough starting point
-    W, H = factorise_Fnorm_subproblems_pgrad(V, inner_dim, n_steps=1, W_init=W, H_init=H)
+    W, H = factorise_Fnorm_subproblems(V, inner_dim, n_steps=1, W_init=W, H_init=H)
 
     HVt = H @ V.T
     HHt = H @ H.T
@@ -154,13 +157,14 @@ def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
 
     dFWt = dFnorm_H(HVt, HHt, W.T)
     dFH = dFnorm_H(WtV, WtW, H)
-    dFpWt = dFnorm_H_projected(dFWt, W.T)
-    dFpH = dFnorm_H_projected(dFH, H)
+    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+    norm_dFpH_2 = dH_projected_norm2(dFH, H)
 
     err = norm_Frobenius(V - W @ H)
-    errors = [err]
+    start_time = process_time()
+    errors = [(err, process_time() - start_time)]
 
-    pgrad_norm = norm_Frobenius(np.hstack([dFpWt, dFpH]))
+    pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
     min_pgrad_main = epsiolon * pgrad_norm
 
     alpha = 1
@@ -172,7 +176,7 @@ def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
 
         err = norm_Frobenius(V - W @ H)
         if record_errors:
-            errors.append(err)
+            errors.append((err, process_time() - start_time))
 
         WtV = W.T @ V
         WtW = W.T @ W
@@ -181,15 +185,16 @@ def factorise_Fnorm_direct_pgrad(V, inner_dim, n_steps=10000, epsiolon=1e-6,
 
         dFWt = dFnorm_H(HVt, HHt, W.T)
         dFH = dFnorm_H(WtV, WtW, H)
-        dFpWt = dFnorm_H_projected(dFWt, W.T)
-        dFpH = dFnorm_H_projected(dFH, H)
+        norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+        norm_dFpH_2 = dH_projected_norm2(dFH, H)
 
-        pgrad_norm = norm_Frobenius(np.hstack([dFpWt, dFpH]))
+        pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
     if record_errors:
         return W, H, np.array(errors)
     else:
         return W, H
+
 
 def pgd_global_step(V, W, H, dFW, dFH, start_alpha,
                         beta=0.1, max_alpha_search_iters=20):
@@ -223,6 +228,7 @@ def pgd_global_step(V, W, H, dFW, dFH, start_alpha,
                 break
 
     return W_new, H_new, alpha
+
 
 def pgd_global_step_condition(V, WH_old, WH_new, df_W, df_H, sigma=0.01):
     W_old, H_old = WH_old
