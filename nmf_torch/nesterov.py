@@ -1,8 +1,10 @@
 import numpy as np
-from nmf.norms import norm_Frobenius, divergence_KullbackLeible
-from nmf.pgrad import project, dFnorm_H, dH_projected_norm2
+from nmf_torch.norms import norm_Frobenius, divergence_KullbackLeible
+from nmf_torch.pgrad import project, dFnorm_H, dH_projected_norm2
 from time import process_time
-from nmf.mult import update_empty_initials
+from nmf_torch.mult import update_empty_initials
+import torch
+
 
 def factorise_Fnorm(V, inner_dim, n_steps=10000, epsilon=1e-6,
                     record_errors=False, W_init=None, H_init=None):
@@ -12,9 +14,9 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsilon=1e-6,
     start_time = process_time()
     errors = [(err, start_time - process_time())]
 
-    dFWt = dFnorm_H(H @ V.T, H @ H.T, W.T)
-    dFH = dFnorm_H(W.T @ V, W.T @ W, H)
-    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+    dFWt = dFnorm_H(H @ V.t(), H @ H.t(), W.t())
+    dFH = dFnorm_H(W.t() @ V, W.t() @ W, H)
+    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.t())
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
     pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
@@ -27,8 +29,8 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsilon=1e-6,
             break
 
         W, min_pgrad_W, norm_dFpWt_2 = \
-            nesterov_subproblem_H(V.T, H.T, W.T, min_pgrad_W)
-        W = W.T
+            nesterov_subproblem_H(V.t(), H.t(), W.t(), min_pgrad_W)
+        W = W.t()
 
         H, min_pgrad_H, norm_dFpH_2 = \
             nesterov_subproblem_H(V, W, H, min_pgrad_H)
@@ -47,16 +49,16 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsilon=1e-6,
 
 def nesterov_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
     a = 1
-    WtW = W.T @ W
-    WtV = W.T @ V
+    WtW = W.t() @ W
+    WtV = W.t() @ V
 
     dFH = dFnorm_H(WtV, WtW, H)
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
     if np.sqrt(norm_dFpH_2) < min_pgrad:
         return H, min_pgrad / 10, norm_dFpH_2
 
-    L = np.linalg.norm(WtW, ord=2)
-    Y = H.copy()
+    L = torch.norm(WtW, p=2)
+    Y = H.clone()
     for i in range(n_maxiter):
         H_next = project(Y - 1/L * dFnorm_H(WtV, WtW, Y))
         a_next = (1 + np.sqrt(4 * (a ** 2) + 1)) / 2

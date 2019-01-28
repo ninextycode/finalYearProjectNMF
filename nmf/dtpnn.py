@@ -46,7 +46,7 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
         return W, H
 
 
-def dtpnn_subproblem_H(V, W, H, min_pgrad, start_lambda=1, n_maxiter=1):
+def dtpnn_subproblem_H(V, W, H, min_pgrad, start_lambda=1):
     l = start_lambda
     WtV = W.T @ V
     WtW = W.T @ W

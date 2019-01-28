@@ -1,6 +1,7 @@
 import numpy as np
-from nmf.norms import norm_Frobenius
-from nmf.mult import update_empty_initials
+import torch
+from nmf_torch.norms import norm_Frobenius
+from nmf_torch.mult import update_empty_initials
 from time import process_time
 
 
@@ -9,15 +10,15 @@ def factorise_Fnorm_subproblems(V, inner_dim, n_steps=10000, epsilon=1e-6,
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     start_time = process_time()
-    err = norm_Frobenius(V - W @ H)
+    err = float(norm_Frobenius(V - W @ H))
     errors = [(err,  process_time() - start_time)]
 
-    dFWt = dFnorm_H(H @ V.T, H @ H.T, W.T)
-    dFH = dFnorm_H(W.T @ V, W.T @ W, H)
+    dFWt = dFnorm_H(H @ V.t(), H @ H.t(), W.t())
+    dFH = dFnorm_H(W.t() @ V, W.t() @ W, H)
 
-    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.t())
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
-    pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+    pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
     min_pgrad_main = epsilon * pgrad_norm
     min_pgrad_W = max(1e-3, epsilon) * pgrad_norm
@@ -28,17 +29,17 @@ def factorise_Fnorm_subproblems(V, inner_dim, n_steps=10000, epsilon=1e-6,
             break
 
         W, min_pgrad_W, norm_dFpWt_2 = \
-            pgd_subproblem_H(V.T, H.T, W.T, min_pgrad_W)
-        W = W.T
+            pgd_subproblem_H(V.t(), H.t(), W.t(), min_pgrad_W)
+        W = W.t()
 
         H, min_pgrad_H, norm_dFpH_2 = \
             pgd_subproblem_H(V, W, H, min_pgrad_H)
 
-        err = norm_Frobenius(V - W @ H)
+        err = float(norm_Frobenius(V - W @ H))
         if record_errors:
             errors.append((err, process_time() - start_time))
 
-        pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+        pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
     if record_errors:
         return W, H, np.array(errors)
@@ -49,12 +50,12 @@ def factorise_Fnorm_subproblems(V, inner_dim, n_steps=10000, epsilon=1e-6,
 def pgd_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
     H_new = H
     alpha = 1
-    WtV = W.T @ V
-    WtW = W.T @ W
+    WtV = W.t() @ V
+    WtW = W.t() @ W
 
     dF = dFnorm_H(WtV, WtW, H)
     norm_dFpH_2 = dH_projected_norm2(dF, H)
-    if np.sqrt(norm_dFpH_2) < min_pgrad:
+    if torch.sqrt(norm_dFpH_2) < min_pgrad:
         return H_new, min_pgrad / 10, norm_dFpH_2
 
     for i in range(n_maxiter):
@@ -62,7 +63,7 @@ def pgd_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
         H = H_new
         dF = dFnorm_H(WtV, WtW, H)
         norm_dFpH_2 = dH_projected_norm2(dF, H)
-        if np.sqrt(norm_dFpH_2) < min_pgrad:
+        if torch.sqrt(norm_dFpH_2) < min_pgrad:
             break
     return H, min_pgrad, norm_dFpH_2
 
@@ -102,15 +103,15 @@ def pgd_subproblem_step(WtW, H, dF, alpha,
 
 def pgd_subproblem_step_condition(WtW, H_old, H_new, dF, sigma=0.01):
     d = H_new - H_old
-    C = (1 - sigma) * np.sum(dF * d) + 1/2 * np.sum(d * (WtW @ d))
+    C = (1 - sigma) * torch.sum(dF * d) + 1/2 * torch.sum(d * (WtW @ d))
     return C
 
 
 def pgd_subproblem_step_condition_not_simplified(V, W, H_old, H_new, dF, sigma=0.01):
-    f_old = 1/2 * np.sum((V - W @ H_old) ** 2)
-    f_new = 1/2 * np.sum((V - W @ H_new) ** 2)
+    f_old = 1/2 * torch.sum((V - W @ H_old) ** 2)
+    f_new = 1/2 * torch.sum((V - W @ H_new) ** 2)
     d = H_new - H_old
-    C = (f_new - f_old) - sigma * np.sum(dF * d)
+    C = (f_new - f_old) - sigma * torch.sum(dF * d)
     return C
 
 # Fnorm = || V - WH || ^ 2
@@ -120,21 +121,21 @@ def dFnorm_H(WtV, WtW, H):
 
 def dKL_H(V, W, H):
     WH = W @ H
-    return ((WH - V) / WH).T @ W
+    return ((WH - V) / WH).t() @ W
 
 
 def dH_projected(dF, H):
     dF = dF.copy()
-    dF[H <= 0] = np.clip(dF[H <= 0], -np.inf, 0)
+    dF[H <= 0] = torch.clamp(dF[H <= 0], -np.inf, 0)
     return dF
 
 def dH_projected_norm2(dF, H):
-    return np.sum(dF[(H > 0) | (dF < 0)] ** 2)
+    return torch.sum(dF[(H > 0) | (dF < 0)] ** 2)
 
 
 
 def project(A):
-    return np.clip(A, 0, np.inf)
+    return torch.clamp(A, 0, np.inf)
 
 
 def factorise_Fnorm_direct(V, inner_dim, n_steps=10000, epsilon=1e-6,
@@ -150,21 +151,21 @@ def factorise_Fnorm_direct(V, inner_dim, n_steps=10000, epsilon=1e-6,
     # one step is enough to get a good enough starting point
     W, H = factorise_Fnorm_subproblems(V, inner_dim, n_steps=1, W_init=W, H_init=H)
 
-    HVt = H @ V.T
-    HHt = H @ H.T
-    WtV = W.T @ V
-    WtW = W.T @ W
+    HVt = H @ V.t()
+    HHt = H @ H.t()
+    WtV = W.t() @ V
+    WtW = W.t() @ W
 
-    dFWt = dFnorm_H(HVt, HHt, W.T)
+    dFWt = dFnorm_H(HVt, HHt, W.t())
     dFH = dFnorm_H(WtV, WtW, H)
-    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+    norm_dFpWt_2 = dH_projected_norm2(dFWt, W.t())
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
 
-    err = norm_Frobenius(V - W @ H)
+    err = float(norm_Frobenius(V - W @ H))
     start_time = process_time()
     errors = [(err, process_time() - start_time)]
 
-    pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+    pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
     min_pgrad_main = epsilon * pgrad_norm
 
     alpha = 1
@@ -172,23 +173,23 @@ def factorise_Fnorm_direct(V, inner_dim, n_steps=10000, epsilon=1e-6,
         if pgrad_norm < min_pgrad_main:
             break
 
-        W, H, alpha = pgd_global_step(V, W, H, dFWt.T, dFH, alpha)
+        W, H, alpha = pgd_global_step(V, W, H, dFWt.t(), dFH, alpha)
 
-        err = norm_Frobenius(V - W @ H)
+        err = float(norm_Frobenius(V - W @ H))
         if record_errors:
             errors.append((err, process_time() - start_time))
 
-        WtV = W.T @ V
-        WtW = W.T @ W
-        HVt = H @ V.T
-        HHt = H @ H.T
+        WtV = W.t() @ V
+        WtW = W.t() @ W
+        HVt = H @ V.t()
+        HHt = H @ H.t()
 
-        dFWt = dFnorm_H(HVt, HHt, W.T)
+        dFWt = dFnorm_H(HVt, HHt, W.t())
         dFH = dFnorm_H(WtV, WtW, H)
-        norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+        norm_dFpWt_2 = dH_projected_norm2(dFWt, W.t())
         norm_dFpH_2 = dH_projected_norm2(dFH, H)
 
-        pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+        pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
     if record_errors:
         return W, H, np.array(errors)
@@ -234,11 +235,11 @@ def pgd_global_step_condition(V, WH_old, WH_new, df_W, df_H, sigma=0.01):
     W_old, H_old = WH_old
     W_new, H_new = WH_new
 
-    f_old = 1/2 * np.sum((V - W_old @ H_old) ** 2)
-    f_new = 1/2 * np.sum((V - W_new @ H_new) ** 2)
+    f_old = 1/2 * torch.sum((V - W_old @ H_old) ** 2)
+    f_new = 1/2 * torch.sum((V - W_new @ H_new) ** 2)
 
     dW = W_new - W_old
     dH = H_new - H_old
 
-    C = (f_new - f_old) - sigma * (np.sum(df_W * dW) + np.sum(df_H * dH))
+    C = (f_new - f_old) - sigma * (torch.sum(df_W * dW) + torch.sum(df_H * dH))
     return C
