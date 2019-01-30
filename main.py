@@ -4,11 +4,8 @@ import nmf.pgrad
 import nmf.nesterov
 import nmf.dtpnn
 import nmf.bayes
-
-import torch
-
-from nmf.norms import norm_Frobenius
-from nmf.represent import rescale_WH, from_WH_to_rank_1_list
+from visualisation.fact import InteractiveFactorPlot
+from theory.represent import rescale_WH, from_WH_to_rank_1_list
 import matplotlib.pyplot as plt
 
 
@@ -197,41 +194,19 @@ def bayes_text():
     plt.figure()
     for err, lbl in zip(errors, labels):
         print(err)
-        plt.plot(err[:, 1], np.log(err[:,0] / (A.shape[0] * A.shape[1])), label=lbl)
+
     plt.legend()
     plt.show()
 
 
-def plot_factorisation(W, H, grid_shape):
-    l = from_WH_to_rank_1_list(W, H)
-    plt.figure()
-    for i, mat in enumerate(l):
-        i = i + 1
-        plt.subplot(grid_shape[0], grid_shape[1], i)
-        plt.imshow(mat)
-        plt.title(str(i))
+
 
 
 def plot_factorisation_test(A, r):
-    W, H, errors = nmf.nesterov.factorise_Fnorm(A, r, n_steps=1000, epsilon=0,
+    W, H, errors = nmf.nesterov.factorise_Fnorm(A, r, n_steps=100, epsilon=0,
                                      record_errors=True)
-    W, H = rescale_WH(W, H)
+    return InteractiveFactorPlot(W, H, A)
 
-    plt.figure()
-    plt.subplot(121); plt.imshow(W); plt.title("W")
-    plt.subplot(122); plt.imshow(H); plt.title("H")
-
-    plt.figure()
-    plt.subplot(121); plt.imshow(A); plt.title("A")
-    plt.subplot(122); plt.imshow(W @ H); plt.title("W @ H")
-
-    plt.figure()
-    plt.plot(errors[:, 1], np.log(errors[:, 0]))
-
-    side = np.ceil(np.sqrt(r))
-    # plot_factorisation(W, H, (side, side))
-
-    plt.show()
 
 
 if __name__ == "__main__":
@@ -243,6 +218,7 @@ if __name__ == "__main__":
         [0,    0, 0, 1, 1],
         [0,    1, 0, 0, 1]
     ])
-    r = 100
-    A = np.random.rand(r + 500, r) @ np.random.rand(r, r + 100)
-    plot_factorisation_test(A, r)
+    r = 10
+    A = np.random.rand(r + 5, r) @ np.random.rand(r, r + 10)
+    plot = plot_factorisation_test(A, r)
+    plt.show()

@@ -531,7 +531,7 @@ def plot(num, var):
 
 
 
-from main import plot_factorisation
+from visualisation.fact import InteractiveFactorPlot
 
 def text3(formula):
     mat_num, mat_var, ranges, expected_rank = matrix_from_formula(formula)
@@ -543,7 +543,6 @@ def text3(formula):
     print("expected_rank_expanded", q_)
 
     plot(N, V)
-
 
     W, H, errors_i = factorise_Fnorm(N, q_, n_steps=100, epsilon=0, record_errors=True)
 
@@ -560,11 +559,11 @@ def text3(formula):
     plt.imshow(W @ H)
     plt.title("W @ H")
 
-    plot_factorisation(W, H, (6, 6))
+    ifp = InteractiveFactorPlot(W, H, N)
     plt.show()
-    return mat_num, mat_var, N, W, H, q_
+    return ifp, mat_num, mat_var, N, W, H, q_
 
 
-text3("2 * x - 1")
+res = text3("2 * x * x * x * x - 1")
 
 plt.show()
