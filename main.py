@@ -7,6 +7,7 @@ import nmf.bayes
 from visualisation.fact import InteractiveFactorPlot
 from theory.represent import rescale_WH, from_WH_to_rank_1_list
 import matplotlib.pyplot as plt
+from read_data import reader
 
 
 
@@ -199,26 +200,70 @@ def bayes_text():
     plt.show()
 
 
-
-
-
 def plot_factorisation_test(A, r):
     W, H, errors = nmf.nesterov.factorise_Fnorm(A, r, n_steps=100, epsilon=0,
-                                     record_errors=True)
+                                                record_errors=True)
     return InteractiveFactorPlot(W, H, A)
 
 
+def read_data_reuters():
+    data = reader.read_reuters21578("data/reuters21578")
+    print(data.shape)
+
+def read_data_indian_pines():
+    images = reader.read_pines("data/indian_pines/images")
+    ns_line_im = images["site3_im"]
+    ori_shape = ns_line_im.shape
+    print(ns_line_im.shape)
+
+    plt.figure()
+    plt.subplot(161); plt.imshow(ns_line_im[0, :, :])
+    plt.subplot(162); plt.imshow(ns_line_im[43, :, :])
+    plt.subplot(163); plt.imshow(ns_line_im[87, :, :])
+    plt.subplot(164); plt.imshow(ns_line_im[131, :, :])
+    plt.subplot(165); plt.imshow(ns_line_im[175, :, :])
+    plt.subplot(166); plt.imshow(ns_line_im[219, :, :])
+
+    ns_line_im = ns_line_im.reshape(ori_shape[0], -1)
+    print(ns_line_im.shape)
+
+    plt.figure()
+    plt.imshow(ns_line_im, aspect="auto")
+
+    ns_line_im = ns_line_im.reshape(*ori_shape)
+    print(ns_line_im.shape)
+
+    plt.figure()
+    plt.subplot(161); plt.imshow(ns_line_im[0, :, :])
+    plt.subplot(162); plt.imshow(ns_line_im[43, :, :])
+    plt.subplot(163); plt.imshow(ns_line_im[87, :, :])
+    plt.subplot(164); plt.imshow(ns_line_im[131, :, :])
+    plt.subplot(165); plt.imshow(ns_line_im[175, :, :])
+    plt.subplot(166); plt.imshow(ns_line_im[219, :, :])
+
+    plt.show()
+
+
+def read_data_faces():
+    ims = reader.read_face_images("data/att_faces/images/")
+
+    imrows = [
+        np.hstack([ims[i, :, :] for i in range(a, a+40)])
+        for a in range(0, 400, 40)
+    ]
+
+    immatrix = np.vstack(imrows)
+
+    plt.figure()
+    plt.imshow(immatrix, cmap="gray")
+
+    ims = ims.reshape(ims.shape[0], -1)
+    print(ims.shape)
+
+    plt.figure()
+    plt.imshow(ims, cmap="gray", aspect="auto")
+
+    plt.show()
 
 if __name__ == "__main__":
-    # bayes_text()
-    A = np.array([
-        [0.35, 1, 1, 1, 1],
-        [1,    1, 1, 0, 0],
-        [0,    0, 1, 1, 0],
-        [0,    0, 0, 1, 1],
-        [0,    1, 0, 0, 1]
-    ])
-    r = 10
-    A = np.random.rand(r + 5, r) @ np.random.rand(r, r + 10)
-    plot = plot_factorisation_test(A, r)
-    plt.show()
+    read_data_faces()
