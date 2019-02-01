@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from read_data import reader
 
 
-
 np.set_printoptions(precision=3, suppress=True)
+
 
 def plot_algos():
     inner_dim = 40
@@ -118,7 +118,7 @@ def plot_algos():
     plt.show()
 
 
-def bayes_text():
+def bayes_test():
     # np.random.seed(3)
 
     inner_dim = 4
@@ -209,6 +209,7 @@ def plot_factorisation_test(A, r):
 def read_data_reuters():
     data = reader.read_reuters21578("data/reuters21578")
     print(data.shape)
+
 
 def read_data_indian_pines():
     images = reader.read_pines("data/indian_pines/images")
