@@ -4,15 +4,19 @@ from nmf_torch.pgrad import project, dFnorm_H, dH_projected_norm2
 from time import process_time
 from nmf_torch.mult import update_empty_initials
 import torch
+from itertools import count
 
 
-def factorise_Fnorm(V, inner_dim, n_steps=10000, epsilon=1e-6,
-                    record_errors=False, W_init=None, H_init=None):
+def factorise_Fnorm(V, inner_dim,
+                    max_steps, epsilon=0, time_limit=np.inf,
+                    record_errors=False,
+                    W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
-    err = norm_Frobenius(V - W @ H)
+    err = float(norm_Frobenius(V - W @ H))
     start_time = process_time()
-    errors = [(err, start_time - process_time())]
+    time = process_time() - start_time
+    errors = [(time, err)]
 
     dFWt = dFnorm_H(H @ V.t(), H @ H.t(), W.t())
     dFH = dFnorm_H(W.t() @ V, W.t() @ W, H)
@@ -24,8 +28,12 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsilon=1e-6,
     min_pgrad_W = max(1e-3, epsilon) * pgrad_norm
     min_pgrad_H = min_pgrad_W
 
-    for i in range(n_steps):
+    for i in count():
+        if i >= max_steps:
+            break
         if pgrad_norm < min_pgrad_main:
+            break
+        if time > time_limit:
             break
 
         W, min_pgrad_W, norm_dFpWt_2 = \
@@ -35,9 +43,10 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsilon=1e-6,
         H, min_pgrad_H, norm_dFpH_2 = \
             nesterov_subproblem_H(V, W, H, min_pgrad_H)
 
-        err = norm_Frobenius(V - W @ H)
+        err = float(norm_Frobenius(V - W @ H))
+        time = process_time() - start_time
         if record_errors:
-            errors.append((err, process_time() - start_time))
+            errors.append((time, err))
 
         pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 

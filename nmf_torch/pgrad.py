@@ -3,15 +3,18 @@ import torch
 from nmf_torch.norms import norm_Frobenius
 from nmf_torch.mult import update_empty_initials
 from time import process_time
+from itertools import count
 
 
-def factorise_Fnorm_subproblems(V, inner_dim, n_steps=10000, epsilon=1e-6,
-                    record_errors=False, W_init=None, H_init=None):
+def factorise_Fnorm_subproblems(V, inner_dim,
+                                max_steps, epsilon=0, time_limit=np.inf,
+                                record_errors=False, W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     start_time = process_time()
     err = float(norm_Frobenius(V - W @ H))
-    errors = [(err,  process_time() - start_time)]
+    time = process_time() - start_time
+    errors = [(time, err)]
 
     dFWt = dFnorm_H(H @ V.t(), H @ H.t(), W.t())
     dFH = dFnorm_H(W.t() @ V, W.t() @ W, H)
@@ -24,8 +27,12 @@ def factorise_Fnorm_subproblems(V, inner_dim, n_steps=10000, epsilon=1e-6,
     min_pgrad_W = max(1e-3, epsilon) * pgrad_norm
     min_pgrad_H = min_pgrad_W
 
-    for i in range(n_steps):
+    for i in count():
+        if i >= max_steps:
+            break
         if pgrad_norm < min_pgrad_main:
+            break
+        if time > time_limit:
             break
 
         W, min_pgrad_W, norm_dFpWt_2 = \
@@ -36,8 +43,9 @@ def factorise_Fnorm_subproblems(V, inner_dim, n_steps=10000, epsilon=1e-6,
             pgd_subproblem_H(V, W, H, min_pgrad_H)
 
         err = float(norm_Frobenius(V - W @ H))
+        time = process_time() - start_time
         if record_errors:
-            errors.append((err, process_time() - start_time))
+            errors.append((process_time() - start_time, err))
 
         pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
@@ -138,8 +146,9 @@ def project(A):
     return torch.clamp(A, 0, np.inf)
 
 
-def factorise_Fnorm_direct(V, inner_dim, n_steps=10000, epsilon=1e-6,
-                    record_errors=False, W_init=None, H_init=None):
+def factorise_Fnorm_direct(V, inner_dim,
+                           max_steps, epsilon=0, time_limit=np.inf,
+                           record_errors=False, W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     # Given any random initial (W, H), very often after
@@ -149,7 +158,7 @@ def factorise_Fnorm_direct(V, inner_dim, n_steps=10000, epsilon=1e-6,
     # so that f(W1, H1) < f(0, 0).
     # We can solve it by picking a better initial W and H,
     # one step is enough to get a good enough starting point
-    W, H = factorise_Fnorm_subproblems(V, inner_dim, n_steps=1, W_init=W, H_init=H)
+    W, H = factorise_Fnorm_subproblems(V, inner_dim, max_steps=1, epsilon=0, W_init=W, H_init=H)
 
     HVt = H @ V.t()
     HHt = H @ H.t()
@@ -163,21 +172,27 @@ def factorise_Fnorm_direct(V, inner_dim, n_steps=10000, epsilon=1e-6,
 
     err = float(norm_Frobenius(V - W @ H))
     start_time = process_time()
-    errors = [(err, process_time() - start_time)]
+    time = process_time() - start_time
+    errors = [(time, err)]
 
     pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
     min_pgrad_main = epsilon * pgrad_norm
 
     alpha = 1
-    for i in range(n_steps):
+    for i in count():
+        if i >= max_steps:
+            break
         if pgrad_norm < min_pgrad_main:
+            break
+        if time > time_limit:
             break
 
         W, H, alpha = pgd_global_step(V, W, H, dFWt.t(), dFH, alpha)
 
         err = float(norm_Frobenius(V - W @ H))
+        time = process_time() - start_time
         if record_errors:
-            errors.append((err, process_time() - start_time))
+            errors.append((time, err))
 
         WtV = W.t() @ V
         WtW = W.t() @ W

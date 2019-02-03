@@ -22,8 +22,8 @@ def plot_algos():
     seed = 1
     np.random.seed(seed)
 
-    inner_dim = 40
-    size = (60, 50)
+    inner_dim = 4
+    size = (6, 5)
     W_correct = torch.tensor(10 * np.random.rand(size[0], inner_dim))
     H_correct = torch.tensor(np.random.rand(inner_dim, size[1]))
 
@@ -37,19 +37,19 @@ def plot_algos():
     print("H_init", H_init)
 
     W, H, errors_mult = nmf_torch.mult.factorise_Fnorm(A, inner_dim, record_errors=True,
-                                                 n_steps=10000, min_err=0,
-                                                 W_init=W_init.clone(),
-                                                 H_init=H_init.clone())
+                                                       max_steps=10000, epsilon=0,
+                                                       W_init=W_init.clone(),
+                                                       H_init=H_init.clone())
 
     W, H, errors_nest = nmf_torch.nesterov.factorise_Fnorm(A, inner_dim, record_errors=True,
-                                                     n_steps=100, epsilon=0,
-                                                     W_init=W_init.clone(),
-                                                     H_init=H_init.clone())
+                                                           max_steps=100, epsilon=0,
+                                                           W_init=W_init.clone(),
+                                                           H_init=H_init.clone())
 
     W, H, errors_proj_sub = nmf_torch.pgrad.factorise_Fnorm_subproblems(A, inner_dim, record_errors=True,
-                                                  n_steps=100, epsilon=0,
-                                                  W_init=W_init.clone(),
-                                                  H_init=H_init.clone())
+                                                                        max_steps=100, epsilon=0,
+                                                                        W_init=W_init.clone(),
+                                                                        H_init=H_init.clone())
 
     errors = [
         errors_mult,
@@ -64,11 +64,10 @@ def plot_algos():
     for err, lbl in zip(errors, labels):
         plt.plot(err[:, 1], np.log(err[:, 0] / (A.shape[0] * A.shape[1])), label=lbl)
     plt.legend()
-    plt.savefig("performance_torch_seed_{}_big.png".format(seed))
 
 
 def bayes_test():
-    # np.random.seed(3)
+    np.random.seed(3)
 
     inner_dim = 4
     size = (6, 5)
@@ -85,7 +84,7 @@ def bayes_test():
     print("H_init", H_init)
 
     W, H, errors4 = nmf.mult.factorise_Fnorm(A, inner_dim, record_errors=True,
-                                             n_steps=10000, min_err=0,
+                                             n_steps=10000, epsilon=0,
                                              W_init=W_init.copy(),
                                              H_init=H_init.copy())
 
@@ -146,7 +145,7 @@ def bayes_test():
         print(err)
 
     plt.legend()
-    plt.show()
+    
 
 
 def plot_factorisation_test(A, r):
@@ -191,7 +190,7 @@ def read_data_indian_pines():
     plt.subplot(165); plt.imshow(ns_line_im[175, :, :])
     plt.subplot(166); plt.imshow(ns_line_im[219, :, :])
 
-    plt.show()
+    
 
 
 def read_data_faces():
@@ -213,7 +212,8 @@ def read_data_faces():
     plt.figure()
     plt.imshow(ims, cmap="gray", aspect="auto")
 
-    plt.show()
+    
 
 if __name__ == "__main__":
     plot_algos()
+    plt.show()

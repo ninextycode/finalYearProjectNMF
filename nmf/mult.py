@@ -1,6 +1,8 @@
 import nmf.norms
 import numpy as np
 from time import process_time
+from itertools import count
+
 
 def update_empty_initials(V, inner_dim, W_init, H_init):
     if W_init is None:
@@ -14,24 +16,37 @@ def update_empty_initials(V, inner_dim, W_init, H_init):
         H = H_init
     return W, H
 
-def factorise_Fnorm(V, inner_dim, n_steps=10000, min_err=1e-6,
-                    record_errors=False, W_init=None, H_init=None):
-    return factorise(V, inner_dim, n_steps, min_err, record_errors,
+
+def factorise_Fnorm(V, inner_dim,
+                    max_steps, epsilon=0, time_limit=np.inf,
+                    record_errors=False,
+                    W_init=None, H_init=None):
+    return factorise(V=V,
+                     inner_dim=inner_dim,
+                     record_errors=record_errors,
                      update_first=update_first_Fnorm,
-                     update_second=update_second_Fnorm,
                      error=lambda A, B: nmf.norms.norm_Frobenius(A-B),
                      W_init=W_init,
-                     H_init=H_init)
+                     H_init=H_init,
+                     max_steps=max_steps,
+                     epsilon=epsilon,
+                     time_limit=time_limit)
 
 
-def factorise_KLdiv(V, inner_dim, n_steps=10000, min_err=1e-6, record_errors=False,
+def factorise_KLdiv(V, inner_dim,
+                    max_steps, epsilon=0, time_limit=np.inf,
+                    record_errors=False,
                     W_init=None, H_init=None):
-    return factorise(V, inner_dim, n_steps, min_err, record_errors,
+    return factorise(V=V,
+                     inner_dim=inner_dim,
+                     record_errors=record_errors,
                      update_first=update_first_KLdiv,
-                     update_second=update_second_KLdiv,
                      error=nmf.norms.divergence_KullbackLeible,
                      W_init=W_init,
-                     H_init=H_init)
+                     H_init=H_init,
+                     max_steps=max_steps,
+                     epsilon=epsilon,
+                     time_limit=time_limit)
 
 def update_first_Fnorm(V, W, H):
     VHt = V  @ H.T
@@ -46,13 +61,9 @@ def update_first_Fnorm(V, W, H):
 
 def update_second_Fnorm(V, W, H):
     WtV = W.T @ V
-
     WtWH = W.T @ W @ H
-
     WtWH[WtWH == 0] = 1e-10
-
     H = H * WtV / WtWH
-
     return H
 
 
@@ -74,16 +85,22 @@ def update_second_KLdiv(V, W, H):
     return H
 
 
-def factorise(V, inner_dim, n_steps, min_err, record_errors,
-              update_first, update_second, error, W_init, H_init):
+def factorise(V, inner_dim, record_errors,
+              update_first, error, W_init, H_init,
+              max_steps, epsilon, time_limit=np.inf):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     start_time = process_time()
     err = error(V, W @ H)
-    errors = [(err, process_time() - start_time)]
+    time = process_time() - start_time
+    errors = [(time, err)]
 
-    for i in range(n_steps):
-        if err < min_err:
+    for i in count():
+        if i >= max_steps:
+            break
+        if err < epsilon:
+            break
+        if time > time_limit:
             break
 
         W = update_first(V, W, H)
@@ -91,9 +108,9 @@ def factorise(V, inner_dim, n_steps, min_err, record_errors,
         H = update_first(V.T, H.T, W.T).T
 
         err = error(V, W @ H)
+        time = process_time() - start_time
         if record_errors:
-            errors.append((err,  process_time() - start_time))
-
+            errors.append((time, err))
 
     if record_errors:
         return W, H, np.array(errors)

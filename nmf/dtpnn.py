@@ -21,7 +21,7 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
 
     start_time = process_time()
     err = norm_Frobenius(V - W @ H)
-    errors = [(err, process_time() - start_time)]
+    errors = [(process_time() - start_time, err)]
 
     for i in range(n_steps):
         if pgrad_norm < min_pgrad_main:
@@ -36,7 +36,7 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
 
         err = norm_Frobenius(V - W @ H)
         if record_errors:
-            errors.append((err, process_time() - start_time))
+            errors.append((process_time() - start_time, err))
 
         pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
