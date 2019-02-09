@@ -2,3 +2,4 @@
 .idea/*
 data/*
 !data/downlodad_data.sh
+wolfram_api/*

@@ -10,8 +10,8 @@ def factorise_Fnorm_subproblems(V, inner_dim,
                                 record_errors=False, W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
-    start_time = process_time()
     err = norm_Frobenius(V - W @ H)
+    start_time = process_time()
     time = process_time() - start_time
     errors = [(time, err)]
 

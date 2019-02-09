@@ -91,8 +91,8 @@ def factorise(V, inner_dim, record_errors,
               max_steps, epsilon, time_limit=np.inf):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
-    start_time = process_time()
     err = float(error(V, W @ H))
+    start_time = process_time()
     time = process_time() - start_time
     errors = [(time, err)]
 
