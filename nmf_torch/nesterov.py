@@ -22,7 +22,7 @@ def factorise_Fnorm(V, inner_dim,
     dFH = dFnorm_H(W.t() @ V, W.t() @ W, H)
     norm_dFpWt_2 = dH_projected_norm2(dFWt, W.t())
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
-    pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+    pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
     min_pgrad_main = epsilon * pgrad_norm
     min_pgrad_W = max(1e-3, epsilon) * pgrad_norm
@@ -48,7 +48,7 @@ def factorise_Fnorm(V, inner_dim,
         if record_errors:
             errors.append((time, err))
 
-        pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+        pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
     if record_errors:
         return W, H, np.array(errors)
@@ -63,7 +63,7 @@ def nesterov_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
 
     dFH = dFnorm_H(WtV, WtW, H)
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
-    if np.sqrt(norm_dFpH_2) < min_pgrad:
+    if torch.sqrt(norm_dFpH_2) < min_pgrad:
         return H, min_pgrad / 10, norm_dFpH_2
 
     L = torch.norm(WtW, p=2)
@@ -78,7 +78,7 @@ def nesterov_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
 
         dFH = dFnorm_H(WtV, WtW, H)
         norm_dFpH_2 = dH_projected_norm2(dFH, H)
-        if np.sqrt(norm_dFpH_2) < min_pgrad:
+        if torch.sqrt(norm_dFpH_2) < min_pgrad:
             break
 
     return H, min_pgrad, norm_dFpH_2

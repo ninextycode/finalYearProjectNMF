@@ -5,16 +5,16 @@ from itertools import count
 import torch
 
 
-def update_empty_initials(V, inner_dim, W_init, H_init, device="cpu"):
+def update_empty_initials(V, inner_dim, W_init, H_init):
     if W_init is None:
         W = 1 - torch.rand(V.shape[0], inner_dim)
-        W = W.to(device=device)
+        W = W.to(dtype=V.dtype, device=V.device)
     else:
         W = W_init
 
     if H_init is None:
         H = 1 - torch.rand(inner_dim, V.shape[1])
-        H = H.to(device=device)
+        H = H.to(dtype=V.dtype, device=V.device)
     else:
         H = H_init
     return W, H
