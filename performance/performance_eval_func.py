@@ -55,7 +55,7 @@ def plot_performance(errors, ax):
     ax.legend()
 
 
-def torch_algo_wrapper(algo, device="cpu"):
+def torch_algo_wrapper(algo, device="cuda"):
     def algo_w(*args, **kwargs):
         kwargs["V"] = torch.tensor(kwargs["V"], device=device)
         if "W_init" in kwargs.keys():
