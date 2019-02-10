@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from nmf_torch.norms import norm_Frobenius
 from nmf_torch.mult import update_empty_initials
-from time import process_time
+from time import time as get_time
 from itertools import count
 
 
@@ -12,8 +12,8 @@ def factorise_Fnorm_subproblems(V, inner_dim,
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     err = float(norm_Frobenius(V - W @ H))
-    start_time = process_time()
-    time = process_time() - start_time
+    start_time = get_time()
+    time = get_time() - start_time
     errors = [(time, err)]
 
     dFWt = dFnorm_H(H @ V.t(), H @ H.t(), W.t())
@@ -43,9 +43,9 @@ def factorise_Fnorm_subproblems(V, inner_dim,
             pgd_subproblem_H(V, W, H, min_pgrad_H)
 
         err = float(norm_Frobenius(V - W @ H))
-        time = process_time() - start_time
+        time = get_time() - start_time
         if record_errors:
-            errors.append((process_time() - start_time, err))
+            errors.append((get_time() - start_time, err))
 
         pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 
@@ -171,8 +171,8 @@ def factorise_Fnorm_direct(V, inner_dim,
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
 
     err = float(norm_Frobenius(V - W @ H))
-    start_time = process_time()
-    time = process_time() - start_time
+    start_time = get_time()
+    time = get_time() - start_time
     errors = [(time, err)]
 
     pgrad_norm = torch.sqrt(norm_dFpWt_2 + norm_dFpH_2)
@@ -190,7 +190,7 @@ def factorise_Fnorm_direct(V, inner_dim,
         W, H, alpha = pgd_global_step(V, W, H, dFWt.t(), dFH, alpha)
 
         err = float(norm_Frobenius(V - W @ H))
-        time = process_time() - start_time
+        time = get_time() - start_time
         if record_errors:
             errors.append((time, err))
 

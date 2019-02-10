@@ -1,7 +1,7 @@
 import numpy as np
 from nmf.norms import norm_Frobenius
 from nmf.mult import update_empty_initials
-from time import process_time
+from time import time as get_time
 from nmf.pgrad import project
 from scipy.special import erfc, erfcinv, erf, erfinv
 from scipy.stats import invgamma
@@ -18,9 +18,9 @@ def factorise_ICM(V, inner_dim,
     W = W_prior.copy()
     H = H_prior.copy()
 
-    start_time = process_time()
+    start_time = get_time()
     err = norm_Frobenius(V - W @ H)
-    time = process_time() - start_time
+    time = get_time() - start_time
     errors = [(time, err)]
 
     variance = scale_prior / (1 + shape_prior)
@@ -44,7 +44,7 @@ def factorise_ICM(V, inner_dim,
         H = update_W_ICM(VtW, WtW, H.T, H_prior.T, variance).T
 
         err = np.sqrt(err2)
-        time = process_time() - start_time
+        time = get_time() - start_time
         if record_errors:
             errors.append((time, err))
 
@@ -80,9 +80,9 @@ def factorise_Gibbs(V, inner_dim, n_steps=80000,
     W = W_prior.copy()
     H = H_prior.copy()
 
-    start_time = process_time()
+    start_time = get_time()
     err = norm_Frobenius(V - W @ H)
-    errors = [(process_time() - start_time, err)]
+    errors = [(get_time() - start_time, err)]
 
     variance = scale_prior / (1 + shape_prior)
 
@@ -104,7 +104,7 @@ def factorise_Gibbs(V, inner_dim, n_steps=80000,
         VtW = V.T @ W
         H = update_W_Gibbs(VtW, WtW, H.T, H_prior.T, variance).T
 
-        errors.append((process_time() - start_time, np.sqrt(err2)))
+        errors.append((get_time() - start_time, np.sqrt(err2)))
 
         if i >= start_collect_samples:
             samples_W[i - start_collect_samples, :, :] = W

@@ -2,7 +2,7 @@ import numpy as np
 from nmf.norms import norm_Frobenius
 from nmf.pgrad import project, dFnorm_H, dH_projected_norm2, pgd_subproblem_step_condition
 from nmf.mult import update_empty_initials
-from time import process_time
+from time import time as get_time
 
 
 def factorise_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
@@ -19,9 +19,9 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
     min_pgrad_W = max(1e-3, epsiolon) * pgrad_norm
     min_pgrad_H = min_pgrad_W
 
-    start_time = process_time()
+    start_time = get_time()
     err = norm_Frobenius(V - W @ H)
-    errors = [(process_time() - start_time, err)]
+    errors = [(get_time() - start_time, err)]
 
     for i in range(n_steps):
         if pgrad_norm < min_pgrad_main:
@@ -36,7 +36,7 @@ def factorise_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
 
         err = norm_Frobenius(V - W @ H)
         if record_errors:
-            errors.append((process_time() - start_time, err))
+            errors.append((get_time() - start_time, err))
 
         pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
 

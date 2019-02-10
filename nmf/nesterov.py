@@ -1,7 +1,7 @@
 import numpy as np
 from nmf.norms import norm_Frobenius, divergence_KullbackLeible
 from nmf.pgrad import project, dFnorm_H, dH_projected_norm2
-from time import process_time
+from time import time as get_time
 from nmf.mult import update_empty_initials
 from itertools import count
 
@@ -12,8 +12,8 @@ def factorise_Fnorm(V, inner_dim,
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     err = norm_Frobenius(V - W @ H)
-    start_time = process_time()
-    time = process_time() - start_time
+    start_time = get_time()
+    time = get_time() - start_time
     errors = [(time, err)]
 
     dFWt = dFnorm_H(H @ V.T, H @ H.T, W.T)
@@ -42,7 +42,7 @@ def factorise_Fnorm(V, inner_dim,
             nesterov_subproblem_H(V, W, H, min_pgrad_H)
 
         err = norm_Frobenius(V - W @ H)
-        time = process_time() - start_time
+        time = get_time() - start_time
         if record_errors:
             errors.append((time, err))
 

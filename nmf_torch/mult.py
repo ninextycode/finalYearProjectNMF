@@ -1,6 +1,6 @@
 import nmf_torch.norms
 import numpy as np
-from time import process_time
+from time import time as get_time
 from itertools import count
 import torch
 
@@ -92,8 +92,8 @@ def factorise(V, inner_dim, record_errors,
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     err = float(error(V, W @ H))
-    start_time = process_time()
-    time = process_time() - start_time
+    start_time = get_time()
+    time = get_time() - start_time
     errors = [(time, err)]
 
     for i in count():
@@ -108,7 +108,7 @@ def factorise(V, inner_dim, record_errors,
         H = update_first(V.t(), H.t(), W.t()).t()
 
         err = float(error(V, W @ H))
-        time = process_time() - start_time
+        time = get_time() - start_time
 
         if record_errors:
             errors.append((time, err))

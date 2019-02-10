@@ -1,7 +1,7 @@
 import numpy as np
 from nmf.norms import norm_Frobenius
 from nmf.mult import update_empty_initials
-from time import process_time
+from time import time as get_time
 from itertools import count
 
 
@@ -11,8 +11,8 @@ def factorise_Fnorm_subproblems(V, inner_dim,
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 
     err = norm_Frobenius(V - W @ H)
-    start_time = process_time()
-    time = process_time() - start_time
+    start_time = get_time()
+    time = get_time() - start_time
     errors = [(time, err)]
 
     dFWt = dFnorm_H(H @ V.T, H @ H.T, W.T)
@@ -42,7 +42,7 @@ def factorise_Fnorm_subproblems(V, inner_dim,
             pgd_subproblem_H(V, W, H, min_pgrad_H)
 
         err = norm_Frobenius(V - W @ H)
-        time = process_time() - start_time
+        time = get_time() - start_time
         if record_errors:
             errors.append((time, err))
 
@@ -171,8 +171,8 @@ def factorise_Fnorm_direct(V, inner_dim,
     norm_dFpH_2 = dH_projected_norm2(dFH, H)
 
     err = norm_Frobenius(V - W @ H)
-    start_time = process_time()
-    time = process_time() - start_time
+    start_time = get_time()
+    time = get_time() - start_time
     errors = [(time, err)]
 
     pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
@@ -190,7 +190,7 @@ def factorise_Fnorm_direct(V, inner_dim,
         W, H, alpha = pgd_global_step(V, W, H, dFWt.T, dFH, alpha)
 
         err = norm_Frobenius(V - W @ H)
-        time = process_time() - start_time
+        time = get_time() - start_time
         if record_errors:
             errors.append((time, err))
 

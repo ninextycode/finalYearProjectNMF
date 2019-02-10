@@ -73,10 +73,16 @@ def matrix_from_formula(formula):
     final_matrix_var[final_matrix_var == 0] = ""
 
     ranges = merge_dicts(neg_ranges, pos_ranges)
+
+    var_counts = {
+        v: np.count_nonzero((final_matrix_var == v) > 0)
+        for v in ranges.keys()
+    }
     fact_data = {
         "positive": pos_fact_data,
         "negative": neg_fact_data,
-        "ranges": ranges
+        "ranges": ranges,
+        "var_counts": var_counts
     }
 
     r = len(positive_side) + len(negative_side)

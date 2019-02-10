@@ -1,7 +1,9 @@
 import numpy as np
 from theory.transform import matrix_from_formula, remove_variables
+from theory.represent import from_rank_1_list_to_WH
 from itertools import zip_longest
 import matplotlib.pyplot as plt
+
 
 
 def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_data):
@@ -22,8 +24,9 @@ def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
     shape = num_mat.shape
 
     for var, g1_idx in g1_indices_by_var.items():
-        new_terms = create_factorisation_var_gadget(solution[var], fact_data["ranges"][var],
-                                                    shape, g1_idx)
+        new_terms = create_factorisation_strong_vg(fact_data["var_counts"][var],
+                                                   solution[var], fact_data["ranges"][var],
+                                                   shape, g1_idx)
         terms.extend(new_terms)
 
     s_expanded_vars = fact_data["positive"]["s"]["expanded_vars"] + fact_data["negative"]["s"]["expanded_vars"]
@@ -34,7 +37,6 @@ def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
         prod, v1, v2 = [solution[e] for e in exp_vars]
         new_terms = create_factorisation_s(v1, v2, shape,
                                            [clean_grid[0][idx], clean_grid[1][idx]])
-        print(1)
         terms.extend(new_terms)
 
     positive_vals = [solution[v] for v in fact_data["positive"]["p"]["vars"]]
@@ -54,18 +56,18 @@ def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
     return terms
 
 
-def create_factorisation_var_gadget(val, var_range, shape, g1_idx):
+def create_factorisation_strong_vg(num_of_occurencies, val, var_range, shape, g1_idx):
     terms = []
-    new_terms = get_top_corner_terms_vg(val, var_range, shape, g1_idx)
+    new_terms = get_top_corner_terms_vg(num_of_occurencies, val, var_range, shape, g1_idx)
     terms.extend(new_terms)
 
-    new_terms = get_middle_block_terms_vg(val, var_range, shape, g1_idx)
+    new_terms = get_middle_block_terms_vg(num_of_occurencies, val, var_range, shape, g1_idx)
     terms.extend(new_terms)
 
-    return terms
+    return np.array(terms)
 
 
-def get_top_corner_terms_vg(val, val_range, shape, g1_idx):
+def get_top_corner_terms_vg(num_of_occ, val, val_range, shape, g1_idx):
     u = 1 / (val_range[1] + 1 - val)
     terms = [np.zeros(shape) for i in range(4)]
 
@@ -78,23 +80,23 @@ def get_top_corner_terms_vg(val, val_range, shape, g1_idx):
     f2_idx = [[[2], [4]], [[2, 3]]]
     terms[2][g1_idx[0][f2_idx], g1_idx[1][f2_idx]] = [[1], [u]]
 
-    n_cols = g1_idx[0].shape[1]
-    f3_idx = [[[3], [4]], [[0, 3] + [i for i in range(4, n_cols, 5)]]]
+    f3_idx = [[[3], [4]], [[0, 3] + [i for i in range(4, num_of_occ * 5, 5)]]]
     terms[3][g1_idx[0][f3_idx], g1_idx[1][f3_idx]] = [[1], [1-u]]
 
     return terms
 
 
-def get_middle_block_terms_vg(val, var_range, shape, g1_idx):
-    t = (g1_idx[0].shape[0] - 5) // 5
+def get_middle_block_terms_vg(num_of_occurencies, val, var_range, shape, g1_idx):
     terms = []
-    for i in range(t):
-        new_terms = get_one_middle_block_factor_vg(val, var_range, shape, g1_idx, i, t)
+    for i in range(num_of_occurencies):
+        new_terms = get_one_middle_block_factor_vg(num_of_occurencies,
+                                                   val, var_range, shape,
+                                                   g1_idx, i)
         terms.extend(new_terms)
     return terms
 
 
-def get_one_middle_block_factor_vg(val, var_range, shape, g1_idx, block_i, t):
+def get_one_middle_block_factor_vg(num_of_occ, val, var_range, shape, g1_idx, block_i):
     block_idx = [None, None]
     block_slice = [slice(5 + 5 * block_i, None), slice(4 + 5 * block_i, None)]
     block_idx[0] = g1_idx[0][block_slice]
@@ -106,15 +108,17 @@ def get_one_middle_block_factor_vg(val, var_range, shape, g1_idx, block_i, t):
     terms = create_top_left_factorisation_simple_vg(a, l, shape, block_idx)
     terms.append(np.zeros(shape))
 
-    offset_for_1s = 5 * (t - block_i) + block_i
-    terms[4][block_idx[0][0, 0], block_idx[1][0, 0]] = u
-    terms[4][block_idx[0][0, offset_for_1s], block_idx[1][0, offset_for_1s]] = 1
-    terms[4][block_idx[0][offset_for_1s, 0], block_idx[1][offset_for_1s, 0]] = 1
-    terms[4][block_idx[0][offset_for_1s, offset_for_1s],
-             block_idx[1][offset_for_1s, offset_for_1s]] = 1 / u
-    top_row = 5
-    terms[4][g1_idx[0][[top_row], [4 + block_i * 5, 4 + 5 * t + block_i]],
-             g1_idx[1][[top_row], [4 + block_i * 5, 4 + 5 * t + block_i]]] = [[u, 1]]
+    offset_for_1s = 5 * (num_of_occ - block_i) + block_i
+    terms[-1][block_idx[0][0, 0], block_idx[1][0, 0]] = u
+    terms[-1][block_idx[0][0, offset_for_1s], block_idx[1][0, offset_for_1s]] = 1
+    terms[-1][block_idx[0][offset_for_1s, 0], block_idx[1][offset_for_1s, 0]] = 1
+
+    terms[-1][block_idx[0][offset_for_1s, offset_for_1s],
+              block_idx[1][offset_for_1s, offset_for_1s]] = 1 / u
+
+    top_row = 4
+    terms[-1][g1_idx[0][[top_row], [4 + block_i * 5, 4 + 5 * num_of_occ + block_i]],
+              g1_idx[1][[top_row], [4 + block_i * 5, 4 + 5 * num_of_occ + block_i]]] = [[u, 1]]
 
     return terms
 
@@ -146,8 +150,8 @@ def create_top_left_factorisation_simple_vg(a, l, shape, idx):
 
 def create_factorisation_s(val1, val2, shape, idx):
     terms = []
-    idx_block_1 = [idx[0][6:, :5], idx[1][6:, :5]]
-    idx_block_2 = [idx[0][:5, 6:], idx[1][:5, 6:]]
+    idx_block_1 = [idx[0][:5, 6:], idx[1][:5, 6:]]
+    idx_block_2 = [idx[0][6:, :5], idx[1][6:, :5]]
 
     terms_vg_1 = create_top_left_factorisation_simple_vg(1 - val1, 1, shape, idx_block_1)
     terms_vg_2 = create_top_left_factorisation_simple_vg(1 - val2, 1, shape, idx_block_2)
@@ -158,8 +162,8 @@ def create_factorisation_s(val1, val2, shape, idx):
 
     terms[-1][idx[0][5:7, 5:7], idx[1][5:7, 5:7]] = 1
     terms[-1][idx[0][0, 0], idx[1][0, 0]] = val1 * val2
-    terms[-1][idx[0][0, 5], idx[1][0, 5]] = val1
-    terms[-1][idx[0][5, 0], idx[1][5, 0]] = val2
+    terms[-1][idx[0][0, [5, 6]], idx[1][0, [5, 6]]] = val1
+    terms[-1][idx[0][[5, 6], 0], idx[1][[5, 6], 0]] = val2
 
     return terms
 
@@ -182,7 +186,7 @@ def create_factorisation_p(coeffs_vals_list, shape, idx):
         terms.append(np.zeros(shape))
 
         block_idx = [
-            [[i], [t], [t + 1 + 5 * i + 1]],
+            [[i], [t], [t + 1 + 5 * i]],
             [[0, 1 + 4 * t + i]]
         ]
         idx_i = [idx[0][block_idx],
@@ -217,25 +221,139 @@ def test(formula, solution):
     plt.imshow(np.sum(terms, axis=0))
     plt.gca().set_title("sum")
 
+    diff = np.sum(np.abs(N - np.sum(terms, axis=0)))
+    print("diff", diff)
+
+    W, H = from_rank_1_list_to_WH(terms)
+
     plt.figure()
-    plt.imshow(N - np.sum(terms, axis=0))
-    plt.gca().set_title("diff")
+    plt.subplot(121)
+    plt.imshow(W)
+    plt.gca().set_title("W")
+    plt.subplot(122)
+    plt.imshow(H)
+    plt.gca().set_title("H")
 
     print("expected_rank", expected_rank)
     print("len(terms)", len(terms))
 
 
-if __name__ == "__main__":
-    formula = "x * y + z - 0.32"
-    solution = dict(
-        x=0.4,
-        y=0.8,
-        z=1
-    )
-    test(formula, solution)
+
+def test_testricted_factorisation(formula):
+    import numpy as np
+    from nmf.norms import norm_Frobenius, divergence_KullbackLeible
+    from nmf.pgrad import project, dFnorm_H, dH_projected_norm2
+    from time import time as get_time
+    from nmf.mult import update_empty_initials
+    from itertools import count
+
+    def factorise_Fnorm(V, inner_dim,
+                        max_steps, epsilon=0, time_limit=np.inf,
+                        record_errors=False, W_init=None, H_init=None):
+        W, H = update_empty_initials(V, inner_dim, W_init, H_init)
+
+        W_mask = W == 0
+        H_mask = H == 0
+
+        err = norm_Frobenius(V - W @ H)
+        start_time = get_time()
+        time = get_time() - start_time
+        errors = [(time, err)]
+
+        dFWt = dFnorm_H(H @ V.T, H @ H.T, W.T)
+        dFH = dFnorm_H(W.T @ V, W.T @ W, H)
+        norm_dFpWt_2 = dH_projected_norm2(dFWt, W.T)
+        norm_dFpH_2 = dH_projected_norm2(dFH, H)
+        pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+
+        min_pgrad_main = epsilon * pgrad_norm
+        min_pgrad_W = max(1e-3, epsilon) * pgrad_norm
+        min_pgrad_H = min_pgrad_W
+
+        for i in count():
+            if i >= max_steps:
+                break
+            if pgrad_norm < min_pgrad_main:
+                break
+            if time > time_limit:
+                break
+
+            W, min_pgrad_W, norm_dFpWt_2 = \
+                nesterov_subproblem_H(V.T, H.T, W.T, min_pgrad_W)
+            W = W.T
+            W[W_mask] = 0
+            H, min_pgrad_H, norm_dFpH_2 = \
+                nesterov_subproblem_H(V, W, H, min_pgrad_H)
+            H[H_mask] = 0
+            err = norm_Frobenius(V - W @ H)
+            time = get_time() - start_time
+            if record_errors:
+                errors.append((time, err))
+
+            pgrad_norm = np.sqrt(norm_dFpWt_2 + norm_dFpH_2)
+
+        if record_errors:
+            return W, H, np.array(errors)
+        else:
+            return W, H
+
+    def nesterov_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
+        a = 1
+        WtW = W.T @ W
+        WtV = W.T @ V
+
+        dFH = dFnorm_H(WtV, WtW, H)
+        norm_dFpH_2 = dH_projected_norm2(dFH, H)
+        if np.sqrt(norm_dFpH_2) < min_pgrad:
+            return H, min_pgrad / 10, norm_dFpH_2
+
+        L = np.linalg.norm(WtW, ord=2)
+        Y = H.copy()
+        for i in range(n_maxiter):
+            H_next = project(Y - 1 / L * dFnorm_H(WtV, WtW, Y))
+            a_next = (1 + np.sqrt(4 * (a ** 2) + 1)) / 2
+            Y = H_next + (a - 1) / a_next * (H_next - H)
+
+            a = a_next
+            H = H_next
+
+            dFH = dFnorm_H(WtV, WtW, H)
+            norm_dFpH_2 = dH_projected_norm2(dFH, H)
+            if np.sqrt(norm_dFpH_2) < min_pgrad:
+                break
+
+        return H, min_pgrad, norm_dFpH_2
+
+    num_mat, var_mat, expected_rank, fact_data = matrix_from_formula(formula)
+    N, V, expected_rank, g1_indices_by_var = remove_variables(num_mat, var_mat, fact_data["ranges"], expected_rank)
+
+    solution = {
+        v: (r[0] + r[1]) / 2  for v, r in fact_data["ranges"].items()
+    }
+
+    terms = create_factorisation_var_gadgets(N, g1_indices_by_var, solution, fact_data)
+    W, H = from_rank_1_list_to_WH(terms)
+
+    W_, H_, errors = factorise_Fnorm(N, time_limit=180, W_init=W, H_init=H,
+                                     record_errors=True,
+                                     inner_dim=expected_rank,
+                                     max_steps=np.inf, epsilon=0)
+
+    diff = np.sum(np.abs(N - W_ @ H_))
+    print("diff", diff)
+
+
+    plt.plot(errors[:, 0], np.log(errors[:, 1] / (N.shape[0] * N.shape[1])))
+
+    plt.figure()
+    plt.imshow(W_ @ H_ - N)
+    plt.gca().set_title("diff")
 
     plt.show()
 
+
+
+if __name__ == "__main__":
     formula = "x * y + 2 * z + 2 *  z - 3 * u * v *  t - 4 * z - 5 * u * x + 1"
     solution = dict(
         x=0.5,
@@ -246,3 +364,11 @@ if __name__ == "__main__":
         t=0.5
     )
     test(formula, solution)
+
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 250")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 201")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 200")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 100")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 0")
+
+    plt.show()
