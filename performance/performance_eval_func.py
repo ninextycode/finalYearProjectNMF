@@ -26,20 +26,25 @@ def get_time_ratio(errors_0, errors_1):
     return np.array([error_space, time_rates]).T
 
 
+
 def compare_performance(V, inner_dim, time_limit,
                         W_init, H_init,
-                        algo_dict_to_test):
+                        algo_dict_to_test,
+                        kw_override):
     errors = {}
     for algo_name, algo in algo_dict_to_test.items():
         torch.cuda.empty_cache()
-        _, _, errors[algo_name] = algo(V=V,
-                                       inner_dim=inner_dim,
-                                       record_errors=True,
-                                       time_limit=time_limit,
-                                       max_steps=np.inf,
-                                       epsilon=0,
-                                       W_init=W_init.copy(),
-                                       H_init=H_init.copy())
+        kw_args_default = dict(V=V,
+                               inner_dim=inner_dim,
+                               record_errors=True,
+                               time_limit=time_limit,
+                               max_steps=np.inf,
+                               epsilon=0,
+                               W_init=W_init.copy(),
+                               H_init=H_init.copy())
+
+        kw_args = {**kw_args_default, **kw_override}
+        _, _, errors[algo_name] = algo(**kw_args)
     return errors
 
 
