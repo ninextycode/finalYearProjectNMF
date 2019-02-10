@@ -63,8 +63,8 @@ def torch_algo_wrapper(algo, device="cuda"):
             kwargs["W_init"] = torch.tensor(kwargs["W_init"], device=device)
         if "H_init" in kwargs.keys():
             kwargs["H_init"] = torch.tensor(kwargs["H_init"], device=device)
-        W, H, errors = algo(*args, **kwargs)
-        W = W.to("cpu").numpy()
-        H = H.to("cpu").numpy()
-        return W, H, errors
+        result = algo(*args, **kwargs)
+        result[0] = result[0].to("cpu").numpy()
+        result[1] = result[0].to("cpu").numpy()
+        return result
     return algo_w
