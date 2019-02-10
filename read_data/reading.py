@@ -25,7 +25,7 @@ def read_reuters21578(dir, vectorizer=TfidfVectorizer()):
     return X
 
 
-def read_pines(dir):
+def read_indian_pines(dir):
     read_tiff_func = lambda path: TIFF.open(path).read_image()
 
     ns_line_path = os.path.join(dir, "19920612_AVIRIS_IndianPine_NS-line.tif")
