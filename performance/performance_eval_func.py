@@ -30,7 +30,7 @@ def get_time_ratio(errors_0, errors_1):
 def compare_performance(V, inner_dim, time_limit,
                         W_init, H_init,
                         algo_dict_to_test,
-                        kw_override):
+                        kw_override={}):
     errors = {}
     for algo_name, algo in algo_dict_to_test.items():
         torch.cuda.empty_cache()
