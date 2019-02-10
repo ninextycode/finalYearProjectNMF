@@ -23,12 +23,11 @@ def matrix_from_formula(formula):
 
     pos_mats_num_s, pos_mats_var_s, \
     pos_mat_p_num, pos_mat_p_var, \
-    pos_ranges, pos_fact_data = matrices_for_poly_with_positive_coef(positive_side, "L", l_max, starting_index=0)
+    pos_ranges, pos_fact_data = matrices_for_poly_with_positive_coef(positive_side, "_L", l_max, starting_index=0)
     neg_mats_num_s, neg_mats_var_s, \
     neg_mat_p_num, neg_mat_p_var, \
-    neg_ranges, neg_fact_data = matrices_for_poly_with_positive_coef(negative_side, "L", l_max,
+    neg_ranges, neg_fact_data = matrices_for_poly_with_positive_coef(negative_side, "_L", l_max,
                                                                  starting_index=len(positive_side))
-
 
     num_matrices = pos_mats_num_s + [pos_mat_p_num] + neg_mats_num_s + [neg_mat_p_num]
     var_matrices = pos_mats_var_s + [pos_mat_p_var] + neg_mats_var_s + [neg_mat_p_var]
@@ -38,30 +37,30 @@ def matrix_from_formula(formula):
     for i, m in enumerate(pos_mats_num_s):
         r, c = m.shape
         pos_idxs_s.append([
-            slice(last_idx[0].end, last_idx[0].end + r),
-            slice(last_idx[1].end, last_idx[1].end + c)
+            slice(last_idx[0].stop, last_idx[0].stop + r),
+            slice(last_idx[1].stop, last_idx[1].stop + c)
         ])
         last_idx = pos_idxs_s[-1]
 
     r, c = pos_mat_p_num.shape
     last_idx = pos_idx_p = [
-        slice(last_idx[0].end, last_idx[0].end + r),
-        slice(last_idx[1].end, last_idx[1].end + c)
+        slice(last_idx[0].stop, last_idx[0].stop + r),
+        slice(last_idx[1].stop, last_idx[1].stop + c)
     ]
 
     neg_idxs_s = []
     for i, m in enumerate(neg_mats_num_s):
         r, c = m.shape
         neg_idxs_s.append([
-            slice(last_idx[0].end, last_idx[0].end + r),
-            slice(last_idx[1].end, last_idx[1].end + c)
+            slice(last_idx[0].stop, last_idx[0].stop + r),
+            slice(last_idx[1].stop, last_idx[1].stop + c)
         ])
         last_idx = neg_idxs_s[-1]
 
     r, c = neg_mat_p_num.shape
     last_idx = neg_idx_p = [
-        slice(last_idx[0].end, last_idx[0].end + r),
-        slice(last_idx[1].end, last_idx[1].end + c)
+        slice(last_idx[0].stop, last_idx[0].stop + r),
+        slice(last_idx[1].stop, last_idx[1].stop + c)
     ]
 
     pos_fact_data["s"]["idxs"] = pos_idxs_s
@@ -69,22 +68,23 @@ def matrix_from_formula(formula):
     neg_fact_data["s"]["idxs"] = neg_idxs_s
     neg_fact_data["p"]["idx"] = neg_idx_p
 
-    fact_data = {
-        "positive": pos_fact_data,
-        "negative": neg_fact_data
-    }
-
-    final_matrix_num = scipy.linalg.block_diag(num_matrices)
-    final_matrix_var = scipy.linalg.block_diag(var_matrices)
+    final_matrix_num = scipy.linalg.block_diag(*num_matrices)
+    final_matrix_var = scipy.linalg.block_diag(*var_matrices)
     final_matrix_var[final_matrix_var == 0] = ""
 
     ranges = merge_dicts(neg_ranges, pos_ranges)
+    fact_data = {
+        "positive": pos_fact_data,
+        "negative": neg_fact_data,
+        "ranges": ranges
+    }
+
     r = len(positive_side) + len(negative_side)
     coef_for_term_products = np.sum([max(0, len(term[1]) - 1) for term in positive_side])\
                            + np.sum([max(0, len(term[1]) - 1) for term in negative_side])
     expected_rank = 5 * r + 9 * coef_for_term_products
 
-    return final_matrix_num, final_matrix_var, ranges, int(expected_rank), fact_data
+    return final_matrix_num, final_matrix_var, int(expected_rank), fact_data
 
 
 def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
@@ -129,7 +129,7 @@ def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
     p_factorisation_data = {
         "var_result": var_result_name,
         "vars": poly_vars,
-        "coeffs": poly_coeffs
+        "coeffs": all_coefs
     }
 
     s_factorisation_data = {
@@ -507,91 +507,6 @@ def apply_variable_gadget_to_single(num, var, top_left, M):
     return num, var
 
 
-def create_factorisation(num_mat, g1_indices_by_var, solution, expanded_vars):
-    for var, v1, v2 in expanded_vars:
-        solution[var] = solution[v1] * solution[v2]
-
-    terms = []
-
-    for var, g1_idx in g1_indices_by_var.items():
-        new_terms = get_top_corner_factors(solution[var], [0, 1],
-                                           num_mat.shape, g1_idx)
-        terms.extend(new_terms)
-
-        new_terms = get_one_t_block_factors(solution[var], [0, 1],
-                                            block_i, t, num_mat.shape,
-                                            g1_idx)
-        terms.extend(new_terms)
-
-
-def get_top_corner_factors(val, val_range, shape, g1_idx):
-    u = 1 / (val_range[1] + 1 - val)
-    factors = [np.zeros(shape) for i in range(4)]
-
-    f0_idx = [[0, 4], [0, 1]]
-    factors[0][g1_idx[0][f0_idx], g1_idx[1][f0_idx]] = [[1], [u]]
-
-    f1_idx = [[1, 4], [1, 2]]
-    factors[1][g1_idx[0][f1_idx], g1_idx[1][f1_idx]] = [[1], [1-u]]
-
-    f2_idx = [[2, 4], [2, 3]]
-    factors[2][g1_idx[0][f2_idx], g1_idx[1][f2_idx]] = [[1], [u]]
-
-    n_cols = g1_idx[0].shappe[1]
-    f3_idx = [[3, 4], [0, 3] + [i for i in range(4, n_cols, 5)]]
-    factors[3][g1_idx[0][f3_idx], g1_idx[1][f3_idx]] = [[1], [1-u]]
-
-    return factors
-
-
-def get_t_blocks_factors(val, val_range, block_i, t, shape, g1_idx):
-    t = (g1_idx[0].shape[0] - 5) / 5
-    pass
-
-
-def get_one_t_block_factors(val, val_range, block_i, t, shape, g1_idx):
-    block_idx = [None, None]
-    block_slice = [slice(5 + 5 * block_i), slice(4 + 5 * block_i)]
-    block_idx[0] = g1_idx[0][block_slice]
-    block_idx[1] = g1_idx[1][block_slice]
-
-    u = 1 / (val_range[1] + 1 - val)
-    l = (val_range[1] - val_range[0]) / (val_range[1] - val_range[0] + 1)
-    factors = [np.zeros(shape) for i in range(5)]
-    a = (1 - u)
-    factors[0][block_idx[0][:2, :5], block_idx[0][:2, :5]] = np.array([
-        [a, a, a, 0, 0],
-        [l, l, l, 0, 0]
-    ])
-    factors[1][block_idx[0][[0, 2], :5], block_idx[0][[0, 2], :5]] = np.array([
-        [0, 0,l-a,l-a,0],
-
-        [0, 0, l,  l, 0]
-    ])
-    factors[2][block_idx[0][[0, 3], :5], block_idx[0][[0, 3], :5]] = np.array([
-        [0, 0, 0, a, a],
-
-        [0, 0, 0, l, l]
-    ])
-    factors[3][block_idx[0][[0, 4], :5], block_idx[0][[0, 4], :5]] = np.array([
-        [0,l-a,0, 0,l-a],
-
-        [0, l, 0, 0, l]
-    ])
-
-    offset_for_1s = 5 * (t - block_i) + block_i
-    factors[4][block_idx[0][0, 0], block_idx[1][0, 0]] = u
-    factors[4][block_idx[0][0, offset_for_1s], block_idx[1][0, offset_for_1s]] = 1
-    factors[4][block_idx[0][offset_for_1s, 0], block_idx[1][offset_for_1s, 0]] = 1
-    factors[4][block_idx[0][offset_for_1s, offset_for_1s],
-               block_idx[1][offset_for_1s, offset_for_1s]] = 1 / u
-    top_row = 5
-    factors[4][g1_idx[0][[top_row], [4 + block_i * 5, 4 + 5 * t + block_i]],
-               g1_idx[1][[top_row], [4 + block_i * 5, 4 + 5 * t + block_i]]] = [[u, 1]]
-
-    return factors
-
-
 from multiprocessing import Pool
 from nmf.pgrad import factorise_Fnorm_subproblems
 from nmf.nesterov import factorise_Fnorm
@@ -715,16 +630,14 @@ def text3(formula):
 
 
 def test_g1_idx(formula):
-    mat_num, mat_var, ranges, expected_rank, expanded_vars, bottom_right_ends = matrix_from_formula(formula)
-    print(expanded_vars)
+    mat_num, mat_var, expected_rank, fact_data = matrix_from_formula(formula)
+    print(fact_data)
     plot(mat_num, mat_var)
 
-    N, V, q_, g1_indices_by_var = remove_variables(mat_num, mat_var, ranges, expected_rank)
+    N, V, q_, g1_indices_by_var = remove_variables(mat_num, mat_var, fact_data["ranges"], expected_rank)
     plot(N, V)
-    for var, idx_g1 in g1_indices_by_var.items():
-        plot(N[idx_g1[0], idx_g1[1]], V[idx_g1[0], idx_g1[1]])
-        plt.gca().set_title(var)
+
 
 if __name__ == "__main__":
-    test_g1_idx("x + y - z")
+    test_g1_idx("x + y - 1")
     plt.show()
