@@ -65,6 +65,6 @@ def torch_algo_wrapper(algo, device="cuda"):
         result = algo(*args, **kwargs)
         result = list(result)
         result[0] = result[0].to("cpu").numpy()
-        result[1] = result[0].to("cpu").numpy()
+        result[1] = result[1].to("cpu").numpy()
         return result
     return algo_w
