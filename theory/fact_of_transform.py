@@ -340,16 +340,16 @@ def test_testricted_factorisation(formula):
                                      max_steps=np.inf, epsilon=0)
 
     diff = np.sum(np.abs(N - W_ @ H_))
-    print("diff", diff)
+    print("diff " + formula, diff)
 
 
     plt.plot(errors[:, 0], np.log(errors[:, 1] / (N.shape[0] * N.shape[1])))
+    plt.gca().set_title(formula)
 
     plt.figure()
     plt.imshow(W_ @ H_ - N)
-    plt.gca().set_title("diff")
+    plt.gca().set_title("diff " + formula)
 
-    plt.show()
 
 
 
@@ -363,12 +363,12 @@ if __name__ == "__main__":
         u=0.4,
         t=0.5
     )
-    test(formula, solution)
+    #test(formula, solution)
 
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 250")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 201")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 200")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 100")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 0")
+    test_testricted_factorisation("100 * x * y + 100 * x * z - 250")
+    test_testricted_factorisation("100 * x * y + 100 * x * z - 201")
+    test_testricted_factorisation("100 * x * y + 100 * x * z - 200")
+    test_testricted_factorisation("100 * x * y + 100 * x * z - 100")
+    test_testricted_factorisation("100 * x * y + 100 * x * z - 0")
 
     plt.show()
