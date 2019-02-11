@@ -10,19 +10,17 @@ def get_time_ratio(errors_0, errors_1):
     # Rartio of times to reach certain cost function value
     max_log_error = max(np.max(np.log(errors_0[1:, 1])),
                         np.max(np.log(errors_1[1:, 1])))
-    min_log_error = min(np.max(np.log(errors_0[:, 1])),
+    min_log_error = min(np.min(np.log(errors_0[:, 1])),
                         np.min(np.log(errors_1[:, 1])))
 
     n = 100
     error_space = np.linspace(min_log_error, max_log_error, n)
     time_rates = np.zeros(n)
     for err_i in range(n):
-        try:
-            time_0 = errors_0[np.log(errors_0[:, 1]) <= error_space[err_i], 0][0]
-            time_1 = errors_1[np.log(errors_1[:, 1]) <= error_space[err_i], 0][0]
-            time_rates[err_i] = time_0 / time_1
-        except:
-            time_rates[err_i] = np.nan
+        time_0 = errors_0[np.log(errors_0[:, 1]) <= error_space[err_i], 0][0]
+        time_1 = errors_1[np.log(errors_1[:, 1]) <= error_space[err_i], 0][0]
+        time_rates[err_i] = time_0 / time_1
+
     return np.array([error_space, time_rates]).T
 
 
