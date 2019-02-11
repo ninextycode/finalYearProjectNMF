@@ -33,10 +33,10 @@ def read_indian_pines(dir):
     site3_path = os.path.join(dir, "19920612_AVIRIS_IndianPine_Site3.tif")
     site3_gt_path = os.path.join(dir, "19920612_AVIRIS_IndianPine_Site3_gr.tif")
 
-    ns_line_im = read_tiff_func(ns_line_path)
-    ns_line_gt_im = read_tiff_func(ns_line_gt_path)
-    site3_im = read_tiff_func(site3_path)
-    site3_gt_im = read_tiff_func(site3_gt_path)
+    ns_line_im = read_tiff_func(ns_line_path).astype(float)
+    ns_line_gt_im = read_tiff_func(ns_line_gt_path).astype(float)
+    site3_im = read_tiff_func(site3_path).astype(float)
+    site3_gt_im = read_tiff_func(site3_gt_path).astype(float)
 
     return dict(
         ns_line_im=ns_line_im,
@@ -51,7 +51,7 @@ def read_face_images(dir):
     files = [os.path.join(dir, f) for f in sorted(files)]
     faces = []
     for f in files:
-        face = np.array(Image.open(f))
+        face = np.array(Image.open(f)).astype(float)
         faces.append(face)
     faces = np.array(faces)
     return faces
