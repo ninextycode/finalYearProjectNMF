@@ -36,21 +36,21 @@ def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
     for exp_vars, idx in zip(s_expanded_vars, s_idxs):
         prod, v1, v2 = [solution[e] for e in exp_vars]
         new_terms = create_factorisation_s(v1, v2, shape,
-                                           [clean_grid[0][idx], clean_grid[1][idx]])
+                                           (clean_grid[0][idx], clean_grid[1][idx]))
         terms.extend(new_terms)
 
     positive_vals = [solution[v] for v in fact_data["positive"]["p"]["vars"]]
     positive_coeffs = fact_data["positive"]["p"]["coeffs"]
     idx = fact_data["positive"]["p"]["idx"]
     coeffs_vals_list = list(zip_longest(positive_coeffs, positive_vals, fillvalue=1))
-    new_terms = create_factorisation_p(coeffs_vals_list, shape,  [clean_grid[0][idx], clean_grid[1][idx]])
+    new_terms = create_factorisation_p(coeffs_vals_list, shape,  (clean_grid[0][idx], clean_grid[1][idx]))
     terms.extend(new_terms)
 
-    negative_vals = [solution[v] for v in fact_data["negative"]["p"]["vars"]]
+    negative_vals = (solution[v] for v in fact_data["negative"]["p"]["vars"])
     negative_coeffs = fact_data["negative"]["p"]["coeffs"]
     idx = fact_data["negative"]["p"]["idx"]
     coeffs_vals_list = list(zip_longest(negative_coeffs, negative_vals, fillvalue=1))
-    new_terms = create_factorisation_p(coeffs_vals_list, shape, [clean_grid[0][idx], clean_grid[1][idx]])
+    new_terms = create_factorisation_p(coeffs_vals_list, shape, (clean_grid[0][idx], clean_grid[1][idx]))
     terms.extend(new_terms)
 
     return terms
@@ -71,16 +71,16 @@ def get_top_corner_terms_vg(num_of_occ, val, val_range, shape, g1_idx):
     u = 1 / (val_range[1] + 1 - val)
     terms = [np.zeros(shape) for i in range(4)]
 
-    f0_idx = [[[0], [4]], [[0, 1]]]
+    f0_idx = ([[0], [4]], [[0, 1]])
     terms[0][g1_idx[0][f0_idx], g1_idx[1][f0_idx]] = [[1], [u]]
 
-    f1_idx = [[[1], [4]], [[1, 2]]]
+    f1_idx = ([[1], [4]], [[1, 2]])
     terms[1][g1_idx[0][f1_idx], g1_idx[1][f1_idx]] = [[1], [1-u]]
 
-    f2_idx = [[[2], [4]], [[2, 3]]]
+    f2_idx = ([[2], [4]], [[2, 3]])
     terms[2][g1_idx[0][f2_idx], g1_idx[1][f2_idx]] = [[1], [u]]
 
-    f3_idx = [[[3], [4]], [[0, 3] + [i for i in range(4, num_of_occ * 5, 5)]]]
+    f3_idx = ([[3], [4]], [[0, 3] + [i for i in range(4, num_of_occ * 5, 5)]])
     terms[3][g1_idx[0][f3_idx], g1_idx[1][f3_idx]] = [[1], [1-u]]
 
     return terms
@@ -98,7 +98,7 @@ def get_middle_block_terms_vg(num_of_occurencies, val, var_range, shape, g1_idx)
 
 def get_one_middle_block_factor_vg(num_of_occ, val, var_range, shape, g1_idx, block_i):
     block_idx = [None, None]
-    block_slice = [slice(5 + 5 * block_i, None), slice(4 + 5 * block_i, None)]
+    block_slice = (slice(5 + 5 * block_i, None), slice(4 + 5 * block_i, None))
     block_idx[0] = g1_idx[0][block_slice]
     block_idx[1] = g1_idx[1][block_slice]
 
@@ -176,21 +176,21 @@ def create_factorisation_p(coeffs_vals_list, shape, idx):
     # as in this case the corresponding P matrix is just one zero
     for i, (s, v) in enumerate(coeffs_vals_list):
         sum_val += s * v
-        block_idx = [slice(t + 1 + i * 5, t + 1 + (i + 1) * 5),
-                    [0] + list(range(1 + 4 * i, 1 + 4 * (i + 1)))]
+        block_idx = (slice(t + 1 + i * 5, t + 1 + (i + 1) * 5),
+                    [0] + list(range(1 + 4 * i, 1 + 4 * (i + 1))))
 
-        idx_i = [idx[0][block_idx],
-                 idx[1][block_idx]]
+        idx_i = (idx[0][block_idx],
+                 idx[1][block_idx])
         new_terms = create_top_left_factorisation_simple_vg(1 - v, 1, shape, idx_i)
         terms.extend(new_terms)
         terms.append(np.zeros(shape))
 
-        block_idx = [
+        block_idx = (
             [[i], [t], [t + 1 + 5 * i]],
             [[0, 1 + 4 * t + i]]
-        ]
-        idx_i = [idx[0][block_idx],
-                 idx[1][block_idx]]
+        )
+        idx_i = (idx[0][block_idx],
+                 idx[1][block_idx])
         terms[-1][idx_i] = [
             [v,     1],
             [v * s, s],
@@ -363,12 +363,12 @@ if __name__ == "__main__":
         u=0.4,
         t=0.5
     )
-    #test(formula, solution)
+    test(formula, solution)
 
-    test_testricted_factorisation("100 * x * y + 100 * x * z - 250")
-    test_testricted_factorisation("100 * x * y + 100 * x * z - 201")
-    test_testricted_factorisation("100 * x * y + 100 * x * z - 200")
-    test_testricted_factorisation("100 * x * y + 100 * x * z - 100")
-    test_testricted_factorisation("100 * x * y + 100 * x * z - 0")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 250")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 201")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 200")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 100")
+    #test_testricted_factorisation("100 * x * y + 100 * x * z - 0")
 
     plt.show()

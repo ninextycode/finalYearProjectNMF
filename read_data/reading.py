@@ -3,8 +3,6 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer, HashingVectorizer
 from bs4 import BeautifulSoup
 from libtiff import TIFF
-from PIL import Image
-
 
 
 def read_reuters21578(dir, vectorizer=TfidfVectorizer()):

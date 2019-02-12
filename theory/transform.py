@@ -32,36 +32,36 @@ def matrix_from_formula(formula):
     num_matrices = pos_mats_num_s + [pos_mat_p_num] + neg_mats_num_s + [neg_mat_p_num]
     var_matrices = pos_mats_var_s + [pos_mat_p_var] + neg_mats_var_s + [neg_mat_p_var]
 
-    last_idx = [slice(0, 0), slice(0, 0)]
+    last_idx = (slice(0, 0), slice(0, 0))
     pos_idxs_s = []
     for i, m in enumerate(pos_mats_num_s):
         r, c = m.shape
-        pos_idxs_s.append([
+        pos_idxs_s.append((
             slice(last_idx[0].stop, last_idx[0].stop + r),
             slice(last_idx[1].stop, last_idx[1].stop + c)
-        ])
+        ))
         last_idx = pos_idxs_s[-1]
 
     r, c = pos_mat_p_num.shape
-    last_idx = pos_idx_p = [
+    last_idx = pos_idx_p = (
         slice(last_idx[0].stop, last_idx[0].stop + r),
         slice(last_idx[1].stop, last_idx[1].stop + c)
-    ]
+    )
 
     neg_idxs_s = []
     for i, m in enumerate(neg_mats_num_s):
         r, c = m.shape
-        neg_idxs_s.append([
+        neg_idxs_s.append((
             slice(last_idx[0].stop, last_idx[0].stop + r),
             slice(last_idx[1].stop, last_idx[1].stop + c)
-        ])
+        ))
         last_idx = neg_idxs_s[-1]
 
     r, c = neg_mat_p_num.shape
-    last_idx = neg_idx_p = [
+    last_idx = neg_idx_p = (
         slice(last_idx[0].stop, last_idx[0].stop + r),
         slice(last_idx[1].stop, last_idx[1].stop + c)
-    ]
+    )
 
     pos_fact_data["s"]["idxs"] = pos_idxs_s
     pos_fact_data["p"]["idx"] = pos_idx_p
@@ -258,7 +258,7 @@ def remove_variable_no_rearrangement(num, var, ranges, v):
     var = np.insert(var, var.shape[0], values=[[""] for _ in range(5 * t + 5)], axis=0)
     var = np.insert(var, var.shape[1], values=[[""] for _ in range(5 * t + 4)], axis=1)
 
-    top_block_idx = [slice(5), slice(4)]
+    top_block_idx = (slice(5), slice(4))
     num[idx_g[0][top_block_idx],  idx_g[1][top_block_idx]] = [
         [N, N, 0, 0],
         [0, N, N, 0],
@@ -267,27 +267,27 @@ def remove_variable_no_rearrangement(num, var, ranges, v):
         [N, N, N, N]
     ]
 
-    block_for_N_idx = [[3, 4], slice(4, (4 + t))]
+    block_for_N_idx = ([3, 4], slice(4, (4 + t)))
     num[idx_g[0][block_for_N_idx], idx_g[1][block_for_N_idx]] = N
 
-    block_for_1s_idx = [4, slice(4 + t, 4 + 2 * t)]
+    block_for_1s_idx = (4, slice(4 + t, 4 + 2 * t))
     num[idx_g[0][block_for_1s_idx], idx_g[1][block_for_1s_idx]] = 1
 
-    block_for_Qs_idx = [slice(5, 5 + t), slice(4, 4 + t)]
+    block_for_Qs_idx = (slice(5, 5 + t), slice(4, 4 + t))
     diag_idx = np.diag_indices(t)
     num[idx_g[0][block_for_Qs_idx][diag_idx], idx_g[1][block_for_Qs_idx][diag_idx]] = Q
 
-    identity_1_idx = [slice(5, 5 + t), slice(4 + t, 4 + 2 * t)]
+    identity_1_idx = (slice(5, 5 + t), slice(4 + t, 4 + 2 * t))
     num[idx_g[0][identity_1_idx][diag_idx], idx_g[1][identity_1_idx][diag_idx]] = 1
 
-    identity_2_idx = [slice(5 + t, 5 + 2 * t), slice(4, 4 + t)]
+    identity_2_idx = (slice(5 + t, 5 + 2 * t), slice(4, 4 + t))
     num[idx_g[0][identity_2_idx][diag_idx], idx_g[1][identity_2_idx][diag_idx]] = 1
 
-    block_for_Ms_idx = [slice(5 + t, 5 + 2 * t), slice(4 + t, 4 + 2 * t)]
+    block_for_Ms_idx = (slice(5 + t, 5 + 2 * t), slice(4 + t, 4 + 2 * t))
     num[idx_g[0][block_for_Ms_idx][diag_idx], idx_g[1][block_for_Ms_idx][diag_idx]] = M
 
     for i in range(t):
-        gadget_idx = [slice(5 + i * 5, 5 + i * 5 + 5), slice(4 + i * 5, 4 + i * 5 + 5)]
+        gadget_idx = (slice(5 + i * 5, 5 + i * 5 + 5), slice(4 + i * 5, 4 + i * 5 + 5))
         num[idx_g1[0][gadget_idx], idx_g1[1][gadget_idx]] += (Q - P) * variable_gadget_mat_1
     return num, var, idx_g1
 
@@ -498,8 +498,8 @@ def apply_variable_gadget_to_single(num, var, top_left, M):
     var = np.insert(var, top_left[0]+1, values=[[""] for _ in range(4)], axis=0)
     var = np.insert(var, top_left[1]+1, values=[[""] for _ in range(4)], axis=1)
 
-    new_area = [slice(top_left[0], (top_left[0] + 5)),
-                  slice(top_left[1], (top_left[1] + 5))]
+    new_area = (slice(top_left[0], (top_left[0] + 5)),
+                  slice(top_left[1], (top_left[1] + 5)))
     num[new_area][0, 1:5] = M
     num[new_area][1, 0] = M
 
