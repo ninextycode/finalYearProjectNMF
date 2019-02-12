@@ -8,9 +8,9 @@ def get_random_lowrank_matrix(m, r, n):
 
 def get_time_ratio(errors_0, errors_1):
     # Rartio of times to reach certain cost function value
-    max_log_error = max(np.max(np.log(errors_0[1:, 1])),
+    max_log_error = min(np.max(np.log(errors_0[1:, 1])),
                         np.max(np.log(errors_1[1:, 1])))
-    min_log_error = min(np.min(np.log(errors_0[:, 1])),
+    min_log_error = max(np.min(np.log(errors_0[:, 1])),
                         np.min(np.log(errors_1[:, 1])))
 
     n = 100
