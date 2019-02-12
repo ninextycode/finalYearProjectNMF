@@ -24,7 +24,6 @@ def get_time_ratio(errors_0, errors_1):
     return np.array([error_space, time_rates]).T
 
 
-
 def compare_performance(V, inner_dim, time_limit,
                         W_init, H_init,
                         algo_dict_to_test,
@@ -46,7 +45,7 @@ def compare_performance(V, inner_dim, time_limit,
     return errors
 
 
-def plot_performance(errors, ax):
+def plot_performance_dict(errors, ax):
     keys = sorted(errors.keys())
     for name in keys:
         ls = "--" if "torch" in name else "-"
