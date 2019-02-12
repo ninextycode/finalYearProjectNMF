@@ -4,6 +4,16 @@ import matplotlib.widgets as widgets
 from matplotlib.image import AxesImage
 from matplotlib.gridspec import GridSpec
 from theory.represent import from_WH_to_rank_1_list
+from itertools import product
+
+
+def plot_num_var_matrices(num, var):
+    plt.figure()
+    plt.imshow(num)
+    for i, j in product(range(num.shape[0]), range(num.shape[1])):
+        plt.text(j, i, var[i, j], color="white",
+                 backgroundcolor="black",
+                 horizontalalignment="center")
 
 
 def plot_factorisation_simple(W, H, grid_shape=None):

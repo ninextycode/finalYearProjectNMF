@@ -3,6 +3,7 @@ import numpy as np
 import sympy as sym
 import scipy.linalg
 import matplotlib.pyplot as plt
+from visualisation.visual import plot_num_var_matrices
 
 
 variable_gadget_mat_1 = np.array([
@@ -528,15 +529,15 @@ def test_trasform_G():
     V = np.full(N.shape, "", dtype=object)
     V[N < 0] = "x"
 
-    plot(N, V); plt.title("N original")
+    plot_num_var_matrices(N, V); plt.title("N original")
 
     N_, V_ = remove_variable(N.copy(), V.copy(), {"x": [0, 1]}, "x")
 
-    plot(N_, V_); plt.title("N x removed")
+    plot_num_var_matrices(N_, V_); plt.title("N x removed")
 
     N_, V_ = remove_variable_no_rearrangement(N.copy(), V.copy(), {"x": [0, 1]}, "x")
 
-    plot(N_, V_); plt.title("N x removed alternative")
+    plot_num_var_matrices(N_, V_); plt.title("N x removed alternative")
 
 def get_errors(N, W_init, H_init, q_):
     W, H, errors_i = factorise_Fnorm(N, q_, W_init=W_init, H_init=H_init,
@@ -547,14 +548,14 @@ def get_errors(N, W_init, H_init, q_):
 
 def test2(formula):
     mat_num, mat_var, ranges, expected_rank = matrix_from_formula(formula)
-    plot(mat_num, mat_var)
+    plot_num_var_matrices(mat_num, mat_var)
 
     N, V, q_ = remove_variables(mat_num, mat_var, ranges, expected_rank)
     print("ranges", ranges)
     print("expected_rank", expected_rank)
     print("expected_rank_expanded", q_)
 
-    plot(N, V)
+    plot_num_var_matrices(N, V)
 
     with Pool() as p:
         map_res = p.starmap_async(get_errors,
@@ -591,29 +592,19 @@ def test2(formula):
     return mat_num, mat_var, N, W, H, q_
 
 
-def plot(num, var):
-    plt.figure()
-    plt.imshow(num)
-    for i, j in product(range(num.shape[0]), range(num.shape[1])):
-        plt.text(j, i, var[i, j], color="white",
-                 backgroundcolor="black",
-                 horizontalalignment="center")
-
-
-
-from visualisation.fact import InteractiveFactorPlot
+from visualisation.visual import InteractiveFactorPlot
 
 def text3(formula):
     mat_num, mat_var, ranges, expected_rank, expanded_vars, _ = matrix_from_formula(formula)
     print(expanded_vars)
-    plot(mat_num, mat_var)
+    plot_num_var_matrices(mat_num, mat_var)
 
     N, V, q_, _ = remove_variables(mat_num, mat_var, ranges, expected_rank)
     print("ranges", ranges)
     print("expected_rank", expected_rank)
     print("expected_rank_expanded", q_)
 
-    plot(N, V)
+    plot_num_var_matrices(N, V)
 
     W, H, errors_i = factorise_Fnorm(N, q_, max_steps=100, epsilon=0, record_errors=True)
 
@@ -638,10 +629,10 @@ def text3(formula):
 def test_g1_idx(formula):
     mat_num, mat_var, expected_rank, fact_data = matrix_from_formula(formula)
     print(fact_data)
-    plot(mat_num, mat_var)
+    plot_num_var_matrices(mat_num, mat_var)
 
     N, V, q_, g1_indices_by_var = remove_variables(mat_num, mat_var, fact_data["ranges"], expected_rank)
-    plot(N, V)
+    plot_num_var_matrices(N, V)
 
 
 if __name__ == "__main__":

@@ -201,13 +201,13 @@ def create_factorisation_p(coeffs_vals_list, shape, idx):
 
 
 def test(formula, solution):
-    from theory.transform import plot
+    from theory.transform import plot_num_var_matrices
 
     num_mat, var_mat, expected_rank, fact_data = matrix_from_formula(formula)
     print(fact_data)
 
     N, V, expected_rank, g1_indices_by_var = remove_variables(num_mat, var_mat, fact_data["ranges"], expected_rank)
-    plot(N, V)
+    plot_num_var_matrices(N, V)
 
     plt.figure()
     plt.gca().set_title("small")

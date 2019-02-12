@@ -9,7 +9,7 @@ import nmf_torch.nesterov
 
 import nmf.dtpnn
 import nmf.bayes
-from visualisation.fact import InteractiveFactorPlot
+from visualisation.visual import InteractiveFactorPlot
 from theory.represent import rescale_WH, from_WH_to_rank_1_list
 import matplotlib.pyplot as plt
 from read_data import reading
