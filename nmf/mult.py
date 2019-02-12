@@ -7,11 +7,13 @@ from itertools import count
 def update_empty_initials(V, inner_dim, W_init, H_init):
     if W_init is None:
         W = 1 - np.random.rand(V.shape[0], inner_dim)
+        W = W.astype(V.dtype)
     else:
         W = W_init
 
     if H_init is None:
         H = 1 - np.random.rand(inner_dim, V.shape[1])
+        H = H.astype(V.dtype)
     else:
         H = H_init
     return W, H
