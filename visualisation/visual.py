@@ -96,6 +96,9 @@ class InteractiveFactorPlot:
         self.fact_fig.canvas.draw()
 
     def on_image_clicked(self, event):
+        button = event.mouseevent.button
+        if button != 1:  # left mouse button
+            return
         artist = event.artist
         if isinstance(artist, AxesImage):
             coords = (int(np.rint(event.mouseevent.xdata)),

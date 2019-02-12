@@ -149,7 +149,7 @@ def bayes_test():
 
 
 def plot_factorisation_test(A, r):
-    W, H, errors = nmf.nesterov.factorise_Fnorm(A, r, n_steps=100, epsilon=0,
+    W, H, errors = nmf.nesterov.factorise_Fnorm(A, r, max_steps=100, epsilon=0,
                                                 record_errors=True)
     return InteractiveFactorPlot(W, H, A)
 
@@ -215,5 +215,5 @@ def read_data_faces():
     
 
 if __name__ == "__main__":
-    plot_algos()
+    plot_factorisation_test(np.random.rand(10, 10), 5)
     plt.show()
