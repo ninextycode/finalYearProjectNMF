@@ -1,9 +1,8 @@
-from itertools import product
 import numpy as np
 import sympy as sym
 import scipy.linalg
 import matplotlib.pyplot as plt
-from visualisation.visual import plot_num_var_matrices
+from theory.visual import plot_num_var_matrices
 
 
 variable_gadget_mat_1 = np.array([
@@ -592,7 +591,7 @@ def test2(formula):
     return mat_num, mat_var, N, W, H, q_
 
 
-from visualisation.visual import InteractiveFactorPlot
+from theory.visual import InteractiveFactorPlot
 
 def text3(formula):
     mat_num, mat_var, ranges, expected_rank, expanded_vars, _ = matrix_from_formula(formula)

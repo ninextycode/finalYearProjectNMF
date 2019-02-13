@@ -113,7 +113,7 @@ def plot_ratios(errors, ax, base, selected_algs=None, colors=colors_default):
         selected_algs = errors.keys()
     for algo_name in selected_algs:
         kwargs = dict(label=algo_name)
-        algo_name_perfix = algo_name.split("_")
+        algo_name_perfix = algo_name.split("_")[0]
         if algo_name_perfix in colors.keys():
             kwargs["color"] = colors_default[algo_name_perfix]
         ratios = get_time_ratio(errors[base], errors[algo_name])
