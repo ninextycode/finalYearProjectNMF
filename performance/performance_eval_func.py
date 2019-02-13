@@ -32,6 +32,23 @@ def get_time_ratio(errors_0, errors_1):
     return np.array([error_space, time_rates]).T
 
 
+def get_time_difference(errors_0, errors_1):
+    # Rartio of times to reach certain cost function value
+    max_log_error = min(np.max(np.log(errors_0[1:, 1])),
+                        np.max(np.log(errors_1[1:, 1])))
+    min_log_error = max(np.min(np.log(errors_0[:, 1])),
+                        np.min(np.log(errors_1[:, 1])))
+
+    n = 100
+    error_space = np.linspace(min_log_error, max_log_error, n)
+
+    time_by_error_0 = interp1d(np.log(errors_0[:, 1]), errors_0[:, 0])
+    time_by_error_1 = interp1d(np.log(errors_1[:, 1]), errors_1[:, 0])
+
+    time_differences = time_by_error_0(error_space) - time_by_error_1(error_space)
+    return np.array([error_space, time_differences]).T
+
+
 def compare_performance(V, inner_dim, time_limit,
                         W_init, H_init,
                         algo_dict_to_test,
@@ -104,7 +121,6 @@ def plot_errors_dict(dict_data, ax, log=False, title=None, x_lbl=None):
         ls = "--" if "torch" in k else "-"
         y_data = np.log(v[:, 1]) if log else v[:, 1]
         ax.plot(v[:, 0], y_data, label=k, ls=ls)
-    ax.set_title("Objective function")
 
     y_lbl = "log(error)" if log else "error"
     ax.set_ylabel(y_lbl)
@@ -168,6 +184,67 @@ def plot_ratios_cpu_gpu(errors_dict, ax, colors=colors_default):
 
         ratios = get_time_ratio(errors_dict[name], errors_dict[name + "_torch"])
         ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
+        ax.set_ylabel("time ratio")
+        ax.set_xlabel("log(error)")
+        
+    ax.set_title("How faster is X on GPU than on CPU")
+    ax.invert_xaxis()
+    ax.legend()
+
+
+def plot_differences(errors, ax, base, selected_algs=None, colors=colors_default):
+    if selected_algs is None:
+        selected_algs = errors.keys()
+    for algo_name in selected_algs:
+        kwargs = dict(label=algo_name)
+        algo_name_perfix = algo_name.split("_")[0]
+        if algo_name_perfix in colors.keys():
+            kwargs["color"] = colors_default[algo_name_perfix]
+        differences = get_time_difference(errors[base], errors[algo_name])
+        ax.plot(differences[:, 0], differences[:, 1], **kwargs)
+    ax.set_xlabel("log(error)")
+    ax.set_ylabel("time difference to reach error value")
+    ax.invert_xaxis()
+    ax.legend()
+
+
+def plot_differences_gpu_algo(errors_dict, axes, selected_algs=None, colors=colors_default):
+    if selected_algs is None:
+        selected_algs = [n for n in errors_dict.keys() if len(n.split("_")) > 0 and n.split("_")[-1] == "torch"]
+
+    key = lambda n: errors_dict[n][-1, 1]
+    names_by_error = sorted(selected_algs, key=key, reverse=True)
+
+    for i, base in zip(range(len(names_by_error) - 1), names_by_error):
+        plot_differences(errors_dict, axes[i], base=base, selected_algs=names_by_error[i:], colors=colors)
+        axes[i].set_title("How faster is X than {} on GPU".format(base))
+
+
+def plot_differences_cpu_algo(errors_dict, axes, selected_algs=None, colors=colors_default):
+    if selected_algs is None:
+        selected_algs = [n for n in errors_dict.keys() if len(n.split("_")) == 0 or n.split("_")[-1] != "torch"]
+
+    key = lambda n: errors_dict[n][-1, 1]
+    names_by_error = sorted(selected_algs, key=key, reverse=True)
+
+    for i, base in zip(range(len(names_by_error) - 1), names_by_error):
+        plot_differences(errors_dict, axes[i], base=base, selected_algs=names_by_error[i:], colors=colors)
+        axes[i].set_title("How faster is X than {} on CPU".format(base))
+
+
+def plot_differences_cpu_gpu(errors_dict, ax, colors=colors_default):
+    for name in errors_dict.keys():
+        if len(name.split("_")) > 0 and name.split("_")[-1] == "torch":
+            continue
+
+        kwargs = dict(label=name)
+        if name in colors.keys():
+            kwargs["color"] = colors_default[name]
+
+        differences = get_time_difference(errors_dict[name], errors_dict[name + "_torch"])
+        ax.plot(differences[:, 0], differences[:, 1], **kwargs)
+        ax.set_ylabel("time difference to reach error value")
+        ax.set_xlabel("log(error)")
 
     ax.set_title("How faster is X on GPU than on CPU")
     ax.invert_xaxis()
