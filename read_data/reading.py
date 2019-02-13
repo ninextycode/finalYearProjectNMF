@@ -82,6 +82,21 @@ class HashTfidfVectoriser:
     def __init__(self, n_features):
         self.hashing_vectoriser = HashingVectorizer(n_features=n_features, alternate_sign=False)
         self.tfidf_transformer = TfidfTransformer()
+        self.words_by_hashes = {}
+
+    def words_by_hash(self, hash):
+        return self.words_by_hashes[hash]
 
     def fit_transform(self, data):
+        self.words_by_hashes = {}
+
+        words_list = self.hashing_vectoriser.build_analyzer()("\n".join(data))
+        unique_words = set(words_list)
+        hashes = self.hashing_vectoriser.transform(unique_words).indices
+
+        for w, h in zip(unique_words, hashes):
+            old_list = self.words_by_hashes.get(h, [])
+            old_list.append(w)
+            self.words_by_hashes[h] = old_list
+
         return self.tfidf_transformer.fit_transform(self.hashing_vectoriser.fit_transform(data))
