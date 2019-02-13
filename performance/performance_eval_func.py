@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import nmf.mult
+from scipy.interpolate import interp1d
 
 
 colors_default = {
@@ -23,12 +24,11 @@ def get_time_ratio(errors_0, errors_1):
 
     n = 100
     error_space = np.linspace(min_log_error, max_log_error, n)
-    time_rates = np.zeros(n)
-    for err_i in range(n):
-        time_0 = errors_0[np.log(errors_0[:, 1]) <= error_space[err_i], 0][0]
-        time_1 = errors_1[np.log(errors_1[:, 1]) <= error_space[err_i], 0][0]
-        time_rates[err_i] = time_0 / time_1
 
+    time_by_error_0 = interp1d(np.log(errors_0[:, 1]), errors_0[:, 0])
+    time_by_error_1 = interp1d(np.log(errors_1[:, 1]), errors_1[:, 0])
+
+    time_rates = time_by_error_0(error_space) / time_by_error_1(error_space)
     return np.array([error_space, time_rates]).T
 
 
@@ -99,7 +99,7 @@ def errors_at_time_t_over_inner_dim(V, r_range, t, algo_dict):
     return {k: np.array(v) for k, v in error_data.items()}
 
 
-def plot_errors_dict(dict_data, ax, log=False, x_lbl=None):
+def plot_errors_dict(dict_data, ax, log=False, title=None, x_lbl=None):
     for k, v in dict_data.items():
         ls = "--" if "torch" in k else "-"
         y_data = np.log(v[:, 1]) if log else v[:, 1]
@@ -111,6 +111,8 @@ def plot_errors_dict(dict_data, ax, log=False, x_lbl=None):
     if x_lbl is not None:
         ax.set_xlabel(x_lbl)
 
+    if title is not None:
+        ax.set_title(title)
     ax.legend()
     return ax
 
