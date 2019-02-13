@@ -38,6 +38,7 @@ def compare_performance(V, inner_dim, time_limit,
                         kw_override={}):
     errors = {}
     for algo_name, algo in algo_dict_to_test.items():
+        print("Starting " + algo_name)
         torch.cuda.empty_cache()
         kw_args_default = dict(V=V,
                                inner_dim=inner_dim,
@@ -107,81 +108,57 @@ def plot_errors_dict(dict_data, ax, log=False):
     return ax
 
 
-def plot_ratios_gpu_algo(errors, ax, base="mult_torch", colors=colors_default):
-    kwargs = dict(label="nesterov_torch")
-    if "nesterov" in colors.keys():
-        kwargs["color"] = colors_default["nesterov"]
-    ratios = get_time_ratio(errors[base], errors["nesterov_torch"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
-
-    kwargs = dict(label="mult_torch")
-    if "mult" in colors.keys():
-        kwargs["color"] = colors_default["mult"]
-    ratios = get_time_ratio(errors[base], errors["mult_torch"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
-
-    kwargs = dict(label="pgrad_torch")
-    if "pgrad" in colors.keys():
-        kwargs["color"] = colors_default["pgrad"]
-    ratios = get_time_ratio(errors[base], errors["pgrad_torch"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
-
-    ax.xlabel("log(error)")
-    ax.ylabel("time ratio")
-
-    ax.set_title("How faster is X than {} on GPU".format(base))
+def plot_ratios(errors, ax, base, selected_algs=None, colors=colors_default):
+    if selected_algs is None:
+        selected_algs = errors.keys()
+    for algo_name in selected_algs:
+        kwargs = dict(label=algo_name)
+        algo_name_perfix = algo_name.split("_")
+        if algo_name_perfix in colors.keys():
+            kwargs["color"] = colors_default[algo_name_perfix]
+        ratios = get_time_ratio(errors[base], errors[algo_name])
+        ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
+    ax.set_xlabel("log(error)")
+    ax.set_ylabel("time ratio")
     ax.invert_xaxis()
     ax.legend()
 
 
-def plot_ratios_cpu_algo(errors, ax, base="mult", colors=colors_default):
-    kwargs = dict(label="nesterov")
-    if "nesterov" in colors.keys():
-        kwargs["color"] = colors_default["nesterov"]
-    ratios = get_time_ratio(errors[base], errors["nesterov"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
+def plot_ratios_gpu_algo(errors_dict, axes, selected_algs=None, colors=colors_default):
+    if selected_algs is None:
+        selected_algs = [n for n in errors_dict.keys() if len(n.split("_")) > 0 and n.split("_")[-1] == "torch"]
 
-    kwargs = dict(label="mult")
-    if "mult" in colors.keys():
-        kwargs["color"] = colors_default["mult"]
-    ratios = get_time_ratio(errors[base], errors["mult"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
+    key = lambda n: errors_dict[n][-1, 1]
+    names_by_error = sorted(selected_algs, key=key, reverse=True)
 
-    kwargs = dict(label="pgrad")
-    if "pgrad" in colors.keys():
-        kwargs["color"] = colors_default["pgrad"]
-    ratios = get_time_ratio(errors[base], errors["pgrad"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
-
-    ax.xlabel("log(error)")
-    ax.ylabel("time ratio")
-
-    ax.set_title("How faster is X than {} on CPU".format(base))
-    ax.invert_xaxis()
-    ax.legend()
+    for i, base in zip(range(len(names_by_error) - 1), names_by_error):
+        plot_ratios(errors_dict, axes[i], base=base, selected_algs=names_by_error[i:], colors=colors)
+        axes[i].set_title("How faster is X than {} on GPU".format(base))
 
 
-def plot_ratios_cpu_gpu(errors, ax, colors=colors_default):
-    kwargs = dict(label="nesterov")
-    if "nesterov" in colors.keys():
-        kwargs["color"] = colors_default["nesterov"]
-    ratios = get_time_ratio(errors["nesterov"], errors["nesterov_torch"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
+def plot_ratios_cpu_algo(errors_dict, axes, selected_algs=None, colors=colors_default):
+    if selected_algs is None:
+        selected_algs = [n for n in errors_dict.keys() if len(n.split("_")) == 0 or n.split("_")[-1] != "torch"]
 
-    kwargs = dict(label="mult")
-    if "mult" in colors.keys():
-        kwargs["color"] = colors_default["mult"]
-    ratios = get_time_ratio(errors["mult"], errors["mult_torch"])
-    ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
+    key = lambda n: errors_dict[n][-1, 1]
+    names_by_error = sorted(selected_algs, key=key, reverse=True)
 
-    kwargs = dict(label="pgrad")
-    if "pgrad" in colors.keys():
-        kwargs["color"] = colors_default["pgrad"]
-    ratios = get_time_ratio(errors["pgrad"], errors["pgrad_torch"])
-    ax.plot(ratios[:, 0], ratios[:, 1],  **kwargs)
+    for i, base in zip(range(len(names_by_error) - 1), names_by_error):
+        plot_ratios(errors_dict, axes[i], base=base, selected_algs=names_by_error[i:], colors=colors)
+        axes[i].set_title("How faster is X than {} on CPU".format(base))
 
-    ax.xlabel("log(error)")
-    ax.ylabel("time ratio")
+
+def plot_ratios_cpu_gpu(errors_dict, ax, colors=colors_default):
+    for name in errors_dict.keys():
+        if len(name.split("_")) > 0 and name.split("_")[-1] == "torch":
+            continue
+
+        kwargs = dict(label=name)
+        if name in colors.keys():
+            kwargs["color"] = colors_default[name]
+
+        ratios = get_time_ratio(errors_dict[name], errors_dict[name + "_torch"])
+        ax.plot(ratios[:, 0], ratios[:, 1], **kwargs)
 
     ax.set_title("How faster is X on GPU than on CPU")
     ax.invert_xaxis()
