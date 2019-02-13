@@ -116,11 +116,15 @@ def errors_at_time_t_over_inner_dim(V, r_range, t, algo_dict):
     return {k: np.array(v) for k, v in error_data.items()}
 
 
-def plot_errors_dict(dict_data, ax, log=False, title=None, x_lbl=None):
-    for k, v in dict_data.items():
-        ls = "--" if "torch" in k else "-"
+def plot_errors_dict(dict_data, ax, log=False, colors=colors_default, title=None, x_lbl=None):
+    for algo_name, v in dict_data.items():
+        ls = "--" if "torch" in algo_name else "-"
         y_data = np.log(v[:, 1]) if log else v[:, 1]
-        ax.plot(v[:, 0], y_data, label=k, ls=ls)
+        kwargs = {}
+        algo_name_perfix = algo_name.split("_")[0]
+        if algo_name_perfix in colors.keys():
+            kwargs["color"] = colors_default[algo_name_perfix]
+        ax.plot(v[:, 0], y_data, label=algo_name, ls=ls, **kwargs)
 
     y_lbl = "log(error)" if log else "error"
     ax.set_ylabel(y_lbl)
