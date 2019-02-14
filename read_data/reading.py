@@ -4,7 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer, H
 from bs4 import BeautifulSoup
 from libtiff import TIFF
 from PIL import Image
-
+import re
 
 
 def read_reuters21578(dir, vectorizer=TfidfVectorizer()):
@@ -89,7 +89,10 @@ class HashTfidfVectoriser:
         return self.words_by_hashes_dict[hash]
 
     def fit_transform(self, data):
-        self.last_data = data
+        self.last_data = data[:]
+        for i in range(len(data)):
+            data[i] = re.sub("\d+", "", data[i])
+
         self.words_by_hashes_dict = {}
 
         words_list = self.hashing_vectoriser.build_analyzer()("\n".join(data))
