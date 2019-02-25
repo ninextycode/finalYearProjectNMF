@@ -23,7 +23,8 @@ def update_empty_initials(V, inner_dim, W_init, H_init):
 def factorise_Fnorm(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False,
-                    W_init=None, H_init=None):
+                    W_init=None, H_init=None,
+                    ):
     return factorise(V=V,
                      inner_dim=inner_dim,
                      record_errors=record_errors,

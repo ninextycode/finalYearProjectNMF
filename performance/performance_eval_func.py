@@ -157,11 +157,11 @@ def plot_ratios_gpu_algo(errors_dict, axes, selected_algs=None, colors=colors_de
     if selected_algs is None:
         selected_algs = [n for n in errors_dict.keys() if len(n.split("_")) > 0 and n.split("_")[-1] == "torch"]
 
-    key = lambda n: errors_dict[n][-1, 1]
-    names_by_error = sorted(selected_algs, key=key, reverse=True)
+        key = lambda n: errors_dict[n][-1, 1]
+        selected_algs = sorted(selected_algs, key=key, reverse=True)
 
-    for i, base in zip(range(len(names_by_error) - 1), names_by_error):
-        plot_ratios(errors_dict, axes[i], base=base, selected_algs=names_by_error[i:], colors=colors)
+    for i, base in zip(range(len(selected_algs) - 1), selected_algs):
+        plot_ratios(errors_dict, axes[i], base=base, selected_algs=selected_algs[i:], colors=colors)
         axes[i].set_title("How faster is X than {} on GPU".format(base))
 
 
@@ -169,11 +169,11 @@ def plot_ratios_cpu_algo(errors_dict, axes, selected_algs=None, colors=colors_de
     if selected_algs is None:
         selected_algs = [n for n in errors_dict.keys() if len(n.split("_")) == 0 or n.split("_")[-1] != "torch"]
 
-    key = lambda n: errors_dict[n][-1, 1]
-    names_by_error = sorted(selected_algs, key=key, reverse=True)
+        key = lambda n: errors_dict[n][-1, 1]
+        selected_algs = sorted(selected_algs, key=key, reverse=True)
 
-    for i, base in zip(range(len(names_by_error) - 1), names_by_error):
-        plot_ratios(errors_dict, axes[i], base=base, selected_algs=names_by_error[i:], colors=colors)
+    for i, base in zip(range(len(selected_algs) - 1), selected_algs):
+        plot_ratios(errors_dict, axes[i], base=base, selected_algs=selected_algs[i:], colors=colors)
         axes[i].set_title("How faster is X than {} on CPU".format(base))
 
 

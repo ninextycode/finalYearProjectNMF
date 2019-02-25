@@ -4,7 +4,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer, H
 from bs4 import BeautifulSoup
 from libtiff import TIFF
 from PIL import Image
-import re
 
 
 def read_reuters21578(dir, vectorizer=TfidfVectorizer()):
