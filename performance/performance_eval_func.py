@@ -28,9 +28,11 @@ def get_time_ratio(errors_0, errors_1):
     time_by_error_0 = interp1d(np.log(errors_0[:, 1]), errors_0[:, 0])
     time_by_error_1 = interp1d(np.log(errors_1[:, 1]), errors_1[:, 0])
 
-    time_rates = time_by_error_0(error_space) / time_by_error_1(error_space)
-    return np.array([error_space, time_rates]).T
-
+    try:
+        time_rates = time_by_error_0(error_space) / time_by_error_1(error_space)
+        return np.array([error_space, time_rates]).T
+    except:
+        return np.array([[], []]).T
 
 def get_time_difference(errors_0, errors_1):
     # Rartio of times to reach certain cost function value
