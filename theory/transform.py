@@ -15,6 +15,7 @@ variable_gadget_mat_1 = np.array([
 
 def matrix_from_formula(formula):
     expanded_formula = sym.expand(formula)
+    print(expanded_formula)
     formula_list = expanded_expression_to_list(expanded_formula)
     positive_side = [t for t in formula_list if t[0] > 0]
     negative_side = [(-t[0], t[1]) for t in formula_list if t[0] < 0]
@@ -203,6 +204,8 @@ def term_to_tuple(term):
         return float(term), []
     if term.is_symbol:
         return 1.0, [str(term)]
+    if term.is_Pow:
+        return 1.0, [str(term.base) for _ in range(term.exp)]
 
     term_args = term.args
     coef = 1

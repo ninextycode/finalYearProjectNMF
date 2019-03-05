@@ -354,14 +354,9 @@ def test_testricted_factorisation(formula):
 
 
 if __name__ == "__main__":
-    formula = "x * y + 2 * z + 2 *  z - 3 * u * v *  t - 4 * z - 5 * u * x + 1"
+    formula = "x * x - 2"
     solution = dict(
-        x=0.5,
-        y=0.6,
-        z=0.5,
-        v=0.5,
-        u=0.4,
-        t=0.5
+        x=np.sqrt(2)
     )
     test(formula, solution)
 
