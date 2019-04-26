@@ -25,18 +25,22 @@ def read_reuters21578(dir, vectorizer=TfidfVectorizer()):
 
 
 def read_indian_pines(dir):
-    read_tiff_func = lambda path: TIFF.open(path).read_image()
-
+    def read_tiff_func(path)
+        try:
+            return TIFF.open(path).read_image().astype(float)
+        except:
+            return None
+        
     ns_line_path = os.path.join(dir, "19920612_AVIRIS_IndianPine_NS-line.tif")
     ns_line_gt_path = os.path.join(dir, "19920612_AVIRIS_IndianPine_NS-line_gr.tif")
     site3_path = os.path.join(dir, "19920612_AVIRIS_IndianPine_Site3.tif")
     site3_gt_path = os.path.join(dir, "19920612_AVIRIS_IndianPine_Site3_gr.tif")
 
-    ns_line_im = read_tiff_func(ns_line_path).astype(float)
-    ns_line_gt_im = read_tiff_func(ns_line_gt_path).astype(float)
-    site3_im = read_tiff_func(site3_path).astype(float)
-    site3_gt_im = read_tiff_func(site3_gt_path).astype(float)
-
+    ns_line_im = read_tiff_func(ns_line_path)
+    ns_line_gt_im = read_tiff_func(ns_line_gt_path)
+    site3_im = read_tiff_func(site3_path)
+    site3_gt_im = read_tiff_func(site3_gt_path)
+    
     return dict(
         ns_line_im=ns_line_im,
         ns_line_gt_im=ns_line_gt_im,
