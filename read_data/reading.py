@@ -25,7 +25,7 @@ def read_reuters21578(dir, vectorizer=TfidfVectorizer()):
 
 
 def read_indian_pines(dir):
-    def read_tiff_func(path)
+    def read_tiff_func(path):
         try:
             return TIFF.open(path).read_image().astype(float)
         except:
