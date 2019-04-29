@@ -1,5 +1,6 @@
-import numpy as np
+# rough work & testing
 
+import numpy as np
 
 import torch
 import matplotlib.pyplot as plt

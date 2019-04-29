@@ -1,3 +1,5 @@
+# rough work & testing
+
 import numpy as np
 import nmf.mult
 import nmf.pgrad
