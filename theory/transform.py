@@ -33,53 +33,57 @@ def matrix_from_formula(formula):
 
     l_max = np.sum([t[0] for t in positive_side]) + np.sum([t[0] for t in negative_side])
     
-    pos_mats_num_s, pos_mats_var_s, \
-    pos_mat_p_num, pos_mat_p_var, \
+    # obtain diagonal blocks which correspond to products and sums 
+    pos_mats_num_p, pos_mats_var_p, \
+    pos_mat_s_num, pos_mat_s_var, \
     pos_ranges, pos_fact_data = matrices_for_poly_with_positive_coef(positive_side, "_L", l_max, starting_index=0)
-    neg_mats_num_s, neg_mats_var_s, \
-    neg_mat_p_num, neg_mat_p_var, \
+    neg_mats_num_p, neg_mats_var_p, \
+    neg_mat_s_num, neg_mat_s_var, \
     neg_ranges, neg_fact_data = matrices_for_poly_with_positive_coef(negative_side, "_L", l_max,
                                                                  starting_index=len(positive_side))
 
-    num_matrices = pos_mats_num_s + [pos_mat_p_num] + neg_mats_num_s + [neg_mat_p_num]
-    var_matrices = pos_mats_var_s + [pos_mat_p_var] + neg_mats_var_s + [neg_mat_p_var]
+    num_matrices = pos_mats_num_p + [pos_mat_s_num] + neg_mats_num_p + [neg_mat_s_num]
+    var_matrices = pos_mats_var_p + [pos_mat_s_var] + neg_mats_var_p + [neg_mat_s_var]
 
+    # calculate the layout and the indices/positions of the blocks 
     last_idx = (slice(0, 0), slice(0, 0))
-    pos_idxs_s = []
-    for i, m in enumerate(pos_mats_num_s):
+    pos_idxs_p = []
+    for i, m in enumerate(pos_mats_num_p):
         r, c = m.shape
-        pos_idxs_s.append((
+        pos_idxs_p.append((
             slice(last_idx[0].stop, last_idx[0].stop + r),
             slice(last_idx[1].stop, last_idx[1].stop + c)
         ))
-        last_idx = pos_idxs_s[-1]
+        last_idx = pos_idxs_p[-1]
 
-    r, c = pos_mat_p_num.shape
-    last_idx = pos_idx_p = (
+    r, c = pos_mat_s_num.shape
+    last_idx = pos_idx_s = (
         slice(last_idx[0].stop, last_idx[0].stop + r),
         slice(last_idx[1].stop, last_idx[1].stop + c)
     )
 
-    neg_idxs_s = []
-    for i, m in enumerate(neg_mats_num_s):
+    neg_idxs_p = []
+    for i, m in enumerate(neg_mats_num_p):
         r, c = m.shape
-        neg_idxs_s.append((
+        neg_idxs_p.append((
             slice(last_idx[0].stop, last_idx[0].stop + r),
             slice(last_idx[1].stop, last_idx[1].stop + c)
         ))
-        last_idx = neg_idxs_s[-1]
+        last_idx = neg_idxs_p[-1]
 
-    r, c = neg_mat_p_num.shape
-    last_idx = neg_idx_p = (
+    r, c = neg_mat_s_num.shape
+    last_idx = neg_idx_s = (
         slice(last_idx[0].stop, last_idx[0].stop + r),
         slice(last_idx[1].stop, last_idx[1].stop + c)
     )
+    
+    # record the positions of the blocks corresponding to variables 
+    pos_fact_data["s"]["idx"] = pos_idx_s
+    pos_fact_data["p"]["idxs"] = pos_idxs_p
+    neg_fact_data["s"]["idx"] = neg_idx_s
+    neg_fact_data["p"]["idxs"] = neg_idxs_p
 
-    pos_fact_data["s"]["idxs"] = pos_idxs_s
-    pos_fact_data["p"]["idx"] = pos_idx_p
-    neg_fact_data["s"]["idxs"] = neg_idxs_s
-    neg_fact_data["p"]["idx"] = neg_idx_p
-
+    # combine blocks in a block-diagonal matrix
     final_matrix_num = scipy.linalg.block_diag(*num_matrices)
     final_matrix_var = scipy.linalg.block_diag(*var_matrices)
     final_matrix_var[final_matrix_var == 0] = ""
@@ -108,8 +112,8 @@ def matrix_from_formula(formula):
 # of polynomial terms
 def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
                                          sum_upper_bound, starting_index=0):
-    matrices_num_s = []
-    matrices_var_s = []
+    matrices_num_p = []
+    matrices_var_p = []
     ranges = {}
 
     poly_vars = []
@@ -127,8 +131,8 @@ def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
             poly_vars.append(last_v)
             poly_coeffs.append(term[0])
 
-        matrices_num_s.extend(matrices_num_l)
-        matrices_var_s.extend(matrices_var_l)
+        matrices_num_p.extend(matrices_num_l)
+        matrices_var_p.extend(matrices_var_l)
         ranges = merge_dicts(ranges, ranges_l)
 
     terms_wo_var_sum = np.sum(terms_wo_var)
@@ -139,19 +143,19 @@ def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
 
     all_coefs = poly_coeffs + terms_wo_var
 
-    mat_p_num, mat_p_var, poly_ranges = matrix_s(all_coefs, poly_vars,
+    mat_s_num, mat_s_var, poly_ranges = matrix_s(all_coefs, poly_vars,
                                                    var_result_name,
                                                    sum_upper_bound)
 
     ranges = merge_dicts(ranges, poly_ranges)
 
-    p_factorization_data = {
+    s_factorization_data = {
         "var_result": var_result_name,
         "vars": poly_vars,
         "coeffs": all_coefs
     }
 
-    s_factorization_data = {
+    p_factorization_data = {
         "expanded_vars": expanded_vars,
     }
 
@@ -159,8 +163,8 @@ def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
         "p": p_factorization_data,
         "s": s_factorization_data
     }
-    return matrices_num_s, matrices_var_s, \
-           mat_p_num, mat_p_var, \
+    return matrices_num_p, matrices_var_p, \
+           mat_s_num, mat_s_var, \
            ranges, factorization_data
 
 # generate diagonal blocks which correspond to the product of 2 variables in a polynomial 
@@ -464,7 +468,7 @@ def fill_G(num, var, Q, P, top_left, t):
         num, var = apply_variable_gadget_to_single(num, var, position_idx, Q - P)
     return num, var
 
-
+# construct a matrix which corresponds to a linear combination, s = sum 
 def matrix_s(s_list, var_coef_names, var_result_name, sum_upper_bound=None):
     if sum_upper_bound is None:
         sum_upper_bound = np.sum(s_list)
@@ -490,7 +494,7 @@ def matrix_s(s_list, var_coef_names, var_result_name, sum_upper_bound=None):
 
     return num, var, ranges
 
-
+# construct a matrix which corresponds to a product between variables, p = product
 def matrix_p(var_names, var_product_name):
     num = np.full((3, 3), 1.0)
 

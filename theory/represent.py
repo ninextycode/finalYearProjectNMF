@@ -1,12 +1,13 @@
 import numpy as np
 
+# function which transforms factorization from the form of the product WH to the sum of rank 1 matrices
 def from_WH_to_rank_1_list(W, H):
     l = []
     for i in range(W.shape[1]):
         l.append(W[:, i:i+1] @ H[i:i+1, :])
     return l
 
-
+# function which transforms factorization from the form of the sum of rank 1 matrices to the product WH 
 def from_rank_1_list_to_WH(rank_1_list):
     cols_W = []
     rows_H = []
@@ -34,7 +35,8 @@ def from_rank_1_matrix_to_wh(V):
         raise Exception("Matrix appears to be of rank higher than 1\n{}".format(V))
     return w, h
 
-
+# a function which makes sure that for i, ith column of W and ith row of H are of the same magnitude
+# and that these rows / columns are sorted according to this magnitude in a decreasing order
 def rescale_WH(W, H):
     s1 = np.sum(W, axis=0)
     s2 = np.sum(H, axis=1)

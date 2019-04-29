@@ -7,15 +7,15 @@ import matplotlib.pyplot as plt
 
 # given root of the polynomial and a corresponding matrix, constrict factorization of this matrix
 def create_factorization_var_gadgets(num_mat, g1_indices_by_var, solution, fact_data):
-    for var, v1, v2 in fact_data["positive"]["s"]["expanded_vars"]:
+    for var, v1, v2 in fact_data["positive"]["p"]["expanded_vars"]:
         solution[var] = solution[v1] * solution[v2]
 
-    for var, v1, v2 in fact_data["negative"]["s"]["expanded_vars"]:
+    for var, v1, v2 in fact_data["negative"]["p"]["expanded_vars"]:
         solution[var] = solution[v1] * solution[v2]
 
-    L = fact_data["negative"]["p"]["var_result"]
-    coeffs = fact_data["positive"]["p"]["coeffs"]
-    vars = fact_data["positive"]["p"]["vars"]
+    L = fact_data["negative"]["s"]["var_result"]
+    coeffs = fact_data["positive"]["s"]["coeffs"]
+    vars = fact_data["positive"]["s"]["vars"]
     solution[L] = 0
     for s, v in zip_longest(coeffs, vars):
         solution[L] += s * solution.get(v, 1)
@@ -29,28 +29,28 @@ def create_factorization_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
                                                    shape, g1_idx)
         terms.extend(new_terms)
 
-    s_expanded_vars = fact_data["positive"]["s"]["expanded_vars"] + fact_data["negative"]["s"]["expanded_vars"]
-    s_idxs = fact_data["positive"]["s"]["idxs"] + fact_data["negative"]["s"]["idxs"]
+    p_expanded_vars = fact_data["positive"]["p"]["expanded_vars"] + fact_data["negative"]["p"]["expanded_vars"]
+    p_idxs = fact_data["positive"]["p"]["idxs"] + fact_data["negative"]["p"]["idxs"]
 
     clean_grid = np.meshgrid(range(shape[0]), range(shape[1]), indexing="ij")
-    for exp_vars, idx in zip(s_expanded_vars, s_idxs):
+    for exp_vars, idx in zip(p_expanded_vars, p_idxs):
         prod, v1, v2 = [solution[e] for e in exp_vars]
-        new_terms = create_factorization_s(v1, v2, shape,
+        new_terms = create_factorization_p(v1, v2, shape,
                                            (clean_grid[0][idx], clean_grid[1][idx]))
         terms.extend(new_terms)
 
-    positive_vals = [solution[v] for v in fact_data["positive"]["p"]["vars"]]
-    positive_coeffs = fact_data["positive"]["p"]["coeffs"]
-    idx = fact_data["positive"]["p"]["idx"]
+    positive_vals = [solution[v] for v in fact_data["positive"]["s"]["vars"]]
+    positive_coeffs = fact_data["positive"]["s"]["coeffs"]
+    idx = fact_data["positive"]["s"]["idx"]
     coeffs_vals_list = list(zip_longest(positive_coeffs, positive_vals, fillvalue=1))
-    new_terms = create_factorization_p(coeffs_vals_list, shape,  (clean_grid[0][idx], clean_grid[1][idx]))
+    new_terms = create_factorization_s(coeffs_vals_list, shape,  (clean_grid[0][idx], clean_grid[1][idx]))
     terms.extend(new_terms)
 
-    negative_vals = (solution[v] for v in fact_data["negative"]["p"]["vars"])
-    negative_coeffs = fact_data["negative"]["p"]["coeffs"]
-    idx = fact_data["negative"]["p"]["idx"]
+    negative_vals = (solution[v] for v in fact_data["negative"]["s"]["vars"])
+    negative_coeffs = fact_data["negative"]["s"]["coeffs"]
+    idx = fact_data["negative"]["s"]["idx"]
     coeffs_vals_list = list(zip_longest(negative_coeffs, negative_vals, fillvalue=1))
-    new_terms = create_factorization_p(coeffs_vals_list, shape, (clean_grid[0][idx], clean_grid[1][idx]))
+    new_terms = create_factorization_s(coeffs_vals_list, shape, (clean_grid[0][idx], clean_grid[1][idx]))
     terms.extend(new_terms)
 
     return terms
@@ -152,7 +152,7 @@ def create_top_left_factorization_simple_vg(a, l, shape, idx):
     return terms
 
 # create factorization part which corresponds to the product of variables
-def create_factorization_s(val1, val2, shape, idx):
+def create_factorization_p(val1, val2, shape, idx):
     terms = []
     idx_block_1 = [idx[0][:5, 6:], idx[1][:5, 6:]]
     idx_block_2 = [idx[0][6:, :5], idx[1][6:, :5]]
@@ -172,7 +172,7 @@ def create_factorization_s(val1, val2, shape, idx):
     return terms
 
 # create factorization part which corresponds to the linear combination of terms
-def create_factorization_p(coeffs_vals_list, shape, idx):
+def create_factorization_s(coeffs_vals_list, shape, idx):
     t = len(coeffs_vals_list)
     sum_val = 0
     terms = []
