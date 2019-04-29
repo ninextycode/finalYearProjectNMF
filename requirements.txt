@@ -7,3 +7,5 @@ matplotlib==2.2.2
 Pillow==6.0.0
 beautifulsoup4==4.7.1
 scikit_learn==0.20.3
+scikit-image=0.15.0
+
