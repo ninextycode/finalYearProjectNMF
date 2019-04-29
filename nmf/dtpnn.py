@@ -5,7 +5,7 @@ from nmf.mult import update_empty_initials
 from time import time as get_time
 
 
-def factorise_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
+def factorize_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
                     record_errors=False, W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
 

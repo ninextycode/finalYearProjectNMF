@@ -133,23 +133,23 @@ def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
 
     ranges = merge_dicts(ranges, poly_ranges)
 
-    p_factorisation_data = {
+    p_factorization_data = {
         "var_result": var_result_name,
         "vars": poly_vars,
         "coeffs": all_coefs
     }
 
-    s_factorisation_data = {
+    s_factorization_data = {
         "expanded_vars": expanded_vars,
     }
 
-    factorisation_data = {
-        "p": p_factorisation_data,
-        "s": s_factorisation_data
+    factorization_data = {
+        "p": p_factorization_data,
+        "s": s_factorization_data
     }
     return matrices_num_s, matrices_var_s, \
            mat_p_num, mat_p_var, \
-           ranges, factorisation_data
+           ranges, factorization_data
 
 
 def matrices_for_vars_prodct(vars_list, idx):
@@ -517,8 +517,8 @@ def apply_variable_gadget_to_single(num, var, top_left, M):
 
 
 from multiprocessing import Pool
-from nmf.pgrad import factorise_Fnorm_subproblems
-from nmf.nesterov import factorise_Fnorm
+from nmf.pgrad import factorize_Fnorm_subproblems
+from nmf.nesterov import factorize_Fnorm
 
 
 def test_trasform_G():
@@ -542,7 +542,7 @@ def test_trasform_G():
     plot_num_var_matrices(N_, V_); plt.title("N x removed alternative")
 
 def get_errors(N, W_init, H_init, q_):
-    W, H, errors_i = factorise_Fnorm(N, q_, W_init=W_init, H_init=H_init,
+    W, H, errors_i = factorize_Fnorm(N, q_, W_init=W_init, H_init=H_init,
                                      n_steps=200, epsilon=0,
                                      record_errors=True)
     return np.log(errors_i[:, 0])
@@ -567,7 +567,7 @@ def test2(formula):
                                 1 - np.random.rand(q_, N.shape[1]),
                                 q_)
                             for _ in range(1000)])
-        W, H, errors_i = factorise_Fnorm_subproblems(N.copy(), q_, n_steps=200, epsilon=0,
+        W, H, errors_i = factorize_Fnorm_subproblems(N.copy(), q_, n_steps=200, epsilon=0,
                                                      record_errors=True)
         errors_i = np.log(errors_i[:, 0])
         errors = map_res.get()
@@ -608,7 +608,7 @@ def text3(formula):
 
     plot_num_var_matrices(N, V)
 
-    W, H, errors_i = factorise_Fnorm(N, q_, max_steps=100, epsilon=0, record_errors=True)
+    W, H, errors_i = factorize_Fnorm(N, q_, max_steps=100, epsilon=0, record_errors=True)
 
 
     plt.figure()

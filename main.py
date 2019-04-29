@@ -38,17 +38,17 @@ def plot_algos():
     print("W_init", W_init)
     print("H_init", H_init)
 
-    W, H, errors_mult = nmf_torch.mult.factorise_Fnorm(A, inner_dim, record_errors=True,
+    W, H, errors_mult = nmf_torch.mult.factorize_Fnorm(A, inner_dim, record_errors=True,
                                                        max_steps=10000, epsilon=0,
                                                        W_init=W_init.clone(),
                                                        H_init=H_init.clone())
 
-    W, H, errors_nest = nmf_torch.nesterov.factorise_Fnorm(A, inner_dim, record_errors=True,
+    W, H, errors_nest = nmf_torch.nesterov.factorize_Fnorm(A, inner_dim, record_errors=True,
                                                            max_steps=100, epsilon=0,
                                                            W_init=W_init.clone(),
                                                            H_init=H_init.clone())
 
-    W, H, errors_proj_sub = nmf_torch.pgrad.factorise_Fnorm_subproblems(A, inner_dim, record_errors=True,
+    W, H, errors_proj_sub = nmf_torch.pgrad.factorize_Fnorm_subproblems(A, inner_dim, record_errors=True,
                                                                         max_steps=100, epsilon=0,
                                                                         W_init=W_init.clone(),
                                                                         H_init=H_init.clone())
@@ -85,12 +85,12 @@ def bayes_test():
     print("W_init", W_init)
     print("H_init", H_init)
 
-    W, H, errors4 = nmf.mult.factorise_Fnorm(A, inner_dim, record_errors=True,
+    W, H, errors4 = nmf.mult.factorize_Fnorm(A, inner_dim, record_errors=True,
                                              n_steps=10000, epsilon=0,
                                              W_init=W_init.copy(),
                                              H_init=H_init.copy())
 
-    samples_W, samples_H, errors5 = nmf.bayes.factorise_Gibbs(A, inner_dim, record_errors=True,
+    samples_W, samples_H, errors5 = nmf.bayes.factorize_Gibbs(A, inner_dim, record_errors=True,
                                               n_steps=8000,
                                               W_prior=np.ones(W_init.shape),
                                               H_prior=np.ones(H_init.shape))
@@ -150,8 +150,8 @@ def bayes_test():
     
 
 
-def plot_factorisation_test(A, r):
-    W, H, errors = nmf.nesterov.factorise_Fnorm(A, r, max_steps=100, epsilon=0,
+def plot_factorization_test(A, r):
+    W, H, errors = nmf.nesterov.factorize_Fnorm(A, r, max_steps=100, epsilon=0,
                                                 record_errors=True)
     return InteractiveFactorPlot(W, H, A)
 
@@ -217,5 +217,5 @@ def read_data_faces():
     
 
 if __name__ == "__main__":
-    plot_factorisation_test(np.random.rand(10, 10), 5)
+    plot_factorization_test(np.random.rand(10, 10), 5)
     plt.show()

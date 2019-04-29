@@ -5,7 +5,7 @@ from time import time as get_time
 from itertools import count
 
 
-def factorise_Fnorm_subproblems(V, inner_dim,
+def factorize_Fnorm_subproblems(V, inner_dim,
                                 max_steps, epsilon=0, time_limit=np.inf,
                                 record_errors=False, W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
@@ -146,7 +146,7 @@ def project(A):
     return np.clip(A, 0, np.inf)
 
 
-def factorise_Fnorm_direct(V, inner_dim,
+def factorize_Fnorm_direct(V, inner_dim,
                            max_steps, epsilon=0, time_limit=np.inf,
                            record_errors=False, W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)
@@ -158,7 +158,7 @@ def factorise_Fnorm_direct(V, inner_dim,
     # so that f(W1, H1) < f(0, 0).
     # We can solve it by picking a better initial W and H,
     # one step is enough to get a good enough starting point
-    W, H = factorise_Fnorm_subproblems(V, inner_dim, max_steps=1, epsilon=0, W_init=W, H_init=H)
+    W, H = factorize_Fnorm_subproblems(V, inner_dim, max_steps=1, epsilon=0, W_init=W, H_init=H)
 
     HVt = H @ V.T
     HHt = H @ H.T

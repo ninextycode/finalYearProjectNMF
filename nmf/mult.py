@@ -19,11 +19,11 @@ def update_empty_initials(V, inner_dim, W_init, H_init):
     return W, H
 
 
-def factorise_Fnorm(V, inner_dim,
+def factorize_Fnorm(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False,
                     W_init=None, H_init=None):
-    return factorise(V=V,
+    return factorize(V=V,
                      inner_dim=inner_dim,
                      record_errors=record_errors,
                      update_first=update_first_Fnorm,
@@ -35,11 +35,11 @@ def factorise_Fnorm(V, inner_dim,
                      time_limit=time_limit)
 
 
-def factorise_KLdiv(V, inner_dim,
+def factorize_KLdiv(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False,
                     W_init=None, H_init=None):
-    return factorise(V=V,
+    return factorize(V=V,
                      inner_dim=inner_dim,
                      record_errors=record_errors,
                      update_first=update_first_KLdiv,
@@ -87,7 +87,7 @@ def update_second_KLdiv(V, W, H):
     return H
 
 
-def factorise(V, inner_dim, record_errors,
+def factorize(V, inner_dim, record_errors,
               update_first, error, W_init, H_init,
               max_steps, epsilon, time_limit=np.inf):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)

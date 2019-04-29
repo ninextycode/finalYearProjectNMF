@@ -5,11 +5,11 @@ from time import time as get_time
 from nmf.pgrad import project
 from scipy.special import erfc, erfcinv, erf, erfinv
 from scipy.stats import invgamma
-from nmf.pgrad import factorise_Fnorm_subproblems
+from nmf.pgrad import factorize_Fnorm_subproblems
 from itertools import count
 
 
-def factorise_ICM(V, inner_dim,
+def factorize_ICM(V, inner_dim,
                   max_steps, min_err=0, time_limit=np.inf,
                   record_errors=False,
                   W_prior=None, H_prior=None,
@@ -72,7 +72,7 @@ def get_variance_ICM(V_shape, err, shape_prior=0, scale_prior=0):
            (V_shape[0] * V_shape[1] / 2 + shape_prior + 1)
 
 
-def factorise_Gibbs(V, inner_dim, n_steps=80000,
+def factorize_Gibbs(V, inner_dim, n_steps=80000,
                     record_errors=False,
                     W_prior=None, H_prior=None,
                     shape_prior=0, scale_prior=0):

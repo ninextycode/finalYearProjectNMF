@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 
-def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_data):
+def create_factorization_var_gadgets(num_mat, g1_indices_by_var, solution, fact_data):
     for var, v1, v2 in fact_data["positive"]["s"]["expanded_vars"]:
         solution[var] = solution[v1] * solution[v2]
 
@@ -24,7 +24,7 @@ def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
     shape = num_mat.shape
 
     for var, g1_idx in g1_indices_by_var.items():
-        new_terms = create_factorisation_strong_vg(fact_data["var_counts"][var],
+        new_terms = create_factorization_strong_vg(fact_data["var_counts"][var],
                                                    solution[var], fact_data["ranges"][var],
                                                    shape, g1_idx)
         terms.extend(new_terms)
@@ -35,7 +35,7 @@ def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
     clean_grid = np.meshgrid(range(shape[0]), range(shape[1]), indexing="ij")
     for exp_vars, idx in zip(s_expanded_vars, s_idxs):
         prod, v1, v2 = [solution[e] for e in exp_vars]
-        new_terms = create_factorisation_s(v1, v2, shape,
+        new_terms = create_factorization_s(v1, v2, shape,
                                            (clean_grid[0][idx], clean_grid[1][idx]))
         terms.extend(new_terms)
 
@@ -43,20 +43,20 @@ def create_factorisation_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
     positive_coeffs = fact_data["positive"]["p"]["coeffs"]
     idx = fact_data["positive"]["p"]["idx"]
     coeffs_vals_list = list(zip_longest(positive_coeffs, positive_vals, fillvalue=1))
-    new_terms = create_factorisation_p(coeffs_vals_list, shape,  (clean_grid[0][idx], clean_grid[1][idx]))
+    new_terms = create_factorization_p(coeffs_vals_list, shape,  (clean_grid[0][idx], clean_grid[1][idx]))
     terms.extend(new_terms)
 
     negative_vals = (solution[v] for v in fact_data["negative"]["p"]["vars"])
     negative_coeffs = fact_data["negative"]["p"]["coeffs"]
     idx = fact_data["negative"]["p"]["idx"]
     coeffs_vals_list = list(zip_longest(negative_coeffs, negative_vals, fillvalue=1))
-    new_terms = create_factorisation_p(coeffs_vals_list, shape, (clean_grid[0][idx], clean_grid[1][idx]))
+    new_terms = create_factorization_p(coeffs_vals_list, shape, (clean_grid[0][idx], clean_grid[1][idx]))
     terms.extend(new_terms)
 
     return terms
 
 
-def create_factorisation_strong_vg(num_of_occurencies, val, var_range, shape, g1_idx):
+def create_factorization_strong_vg(num_of_occurencies, val, var_range, shape, g1_idx):
     terms = []
     new_terms = get_top_corner_terms_vg(num_of_occurencies, val, var_range, shape, g1_idx)
     terms.extend(new_terms)
@@ -105,7 +105,7 @@ def get_one_middle_block_factor_vg(num_of_occ, val, var_range, shape, g1_idx, bl
     u = 1 / (var_range[1] + 1 - val)
     l = (var_range[1] - var_range[0]) / (var_range[1] - var_range[0] + 1)
     a = (1 - u)
-    terms = create_top_left_factorisation_simple_vg(a, l, shape, block_idx)
+    terms = create_top_left_factorization_simple_vg(a, l, shape, block_idx)
     terms.append(np.zeros(shape))
 
     offset_for_1s = 5 * (num_of_occ - block_i) + block_i
@@ -123,7 +123,7 @@ def get_one_middle_block_factor_vg(num_of_occ, val, var_range, shape, g1_idx, bl
     return terms
 
 
-def create_top_left_factorisation_simple_vg(a, l, shape, idx):
+def create_top_left_factorization_simple_vg(a, l, shape, idx):
     terms = [np.zeros(shape) for i in range(4)]
 
     terms[0][idx[0][:2, :5], idx[1][:2, :5]] = np.array([
@@ -148,13 +148,13 @@ def create_top_left_factorisation_simple_vg(a, l, shape, idx):
     return terms
 
 
-def create_factorisation_s(val1, val2, shape, idx):
+def create_factorization_s(val1, val2, shape, idx):
     terms = []
     idx_block_1 = [idx[0][:5, 6:], idx[1][:5, 6:]]
     idx_block_2 = [idx[0][6:, :5], idx[1][6:, :5]]
 
-    terms_vg_1 = create_top_left_factorisation_simple_vg(1 - val1, 1, shape, idx_block_1)
-    terms_vg_2 = create_top_left_factorisation_simple_vg(1 - val2, 1, shape, idx_block_2)
+    terms_vg_1 = create_top_left_factorization_simple_vg(1 - val1, 1, shape, idx_block_1)
+    terms_vg_2 = create_top_left_factorization_simple_vg(1 - val2, 1, shape, idx_block_2)
 
     terms.extend(terms_vg_1)
     terms.extend(terms_vg_2)
@@ -168,7 +168,7 @@ def create_factorisation_s(val1, val2, shape, idx):
     return terms
 
 
-def create_factorisation_p(coeffs_vals_list, shape, idx):
+def create_factorization_p(coeffs_vals_list, shape, idx):
     t = len(coeffs_vals_list)
     sum_val = 0
     terms = []
@@ -181,7 +181,7 @@ def create_factorisation_p(coeffs_vals_list, shape, idx):
 
         idx_i = (idx[0][block_idx],
                  idx[1][block_idx])
-        new_terms = create_top_left_factorisation_simple_vg(1 - v, 1, shape, idx_i)
+        new_terms = create_top_left_factorization_simple_vg(1 - v, 1, shape, idx_i)
         terms.extend(new_terms)
         terms.append(np.zeros(shape))
 
@@ -216,7 +216,7 @@ def test(formula, solution):
 
     plt.show(block=False)
 
-    terms = create_factorisation_var_gadgets(N, g1_indices_by_var, solution, fact_data)
+    terms = create_factorization_var_gadgets(N, g1_indices_by_var, solution, fact_data)
     plt.figure()
     plt.imshow(np.sum(terms, axis=0))
     plt.gca().set_title("sum")
@@ -239,7 +239,7 @@ def test(formula, solution):
 
 
 
-def test_testricted_factorisation(formula):
+def test_testricted_factorization(formula):
     import numpy as np
     from nmf.norms import norm_Frobenius, divergence_KullbackLeible
     from nmf.pgrad import project, dFnorm_H, dH_projected_norm2
@@ -247,7 +247,7 @@ def test_testricted_factorisation(formula):
     from nmf.mult import update_empty_initials
     from itertools import count
 
-    def factorise_Fnorm(V, inner_dim,
+    def factorize_Fnorm(V, inner_dim,
                         max_steps, epsilon=0, time_limit=np.inf,
                         record_errors=False, W_init=None, H_init=None):
         W, H = update_empty_initials(V, inner_dim, W_init, H_init)
@@ -331,10 +331,10 @@ def test_testricted_factorisation(formula):
         v: (r[0] + r[1]) / 2  for v, r in fact_data["ranges"].items()
     }
 
-    terms = create_factorisation_var_gadgets(N, g1_indices_by_var, solution, fact_data)
+    terms = create_factorization_var_gadgets(N, g1_indices_by_var, solution, fact_data)
     W, H = from_rank_1_list_to_WH(terms)
 
-    W_, H_, errors = factorise_Fnorm(N, time_limit=180, W_init=W, H_init=H,
+    W_, H_, errors = factorize_Fnorm(N, time_limit=180, W_init=W, H_init=H,
                                      record_errors=True,
                                      inner_dim=expected_rank,
                                      max_steps=np.inf, epsilon=0)
@@ -360,10 +360,10 @@ if __name__ == "__main__":
     )
     test(formula, solution)
 
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 250")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 201")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 200")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 100")
-    #test_testricted_factorisation("100 * x * y + 100 * x * z - 0")
+    #test_testricted_factorization("100 * x * y + 100 * x * z - 250")
+    #test_testricted_factorization("100 * x * y + 100 * x * z - 201")
+    #test_testricted_factorization("100 * x * y + 100 * x * z - 200")
+    #test_testricted_factorization("100 * x * y + 100 * x * z - 100")
+    #test_testricted_factorization("100 * x * y + 100 * x * z - 0")
 
     plt.show()

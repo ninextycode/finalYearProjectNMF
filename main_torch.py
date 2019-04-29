@@ -19,7 +19,7 @@ A = torch.tensor([
 
 inner_dim = 4
 
-W, H, errors = nmf_torch.nesterov.factorise_Fnorm(A, inner_dim,
+W, H, errors = nmf_torch.nesterov.factorize_Fnorm(A, inner_dim,
                                                   record_errors=True,
                                                   n_steps=100,
                                                   epsilon=0)

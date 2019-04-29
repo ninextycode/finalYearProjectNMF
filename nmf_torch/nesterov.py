@@ -7,7 +7,7 @@ import torch
 from itertools import count
 
 
-def factorise_Fnorm(V, inner_dim,
+def factorize_Fnorm(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False,
                     W_init=None, H_init=None):

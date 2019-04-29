@@ -16,7 +16,7 @@ def plot_num_var_matrices(num, var):
                  horizontalalignment="center")
 
 
-def plot_factorisation_simple(W, H, grid_shape=None):
+def plot_factorization_simple(W, H, grid_shape=None):
     l = from_WH_to_rank_1_list(W, H)
     if grid_shape is None:
         s = np.sqrt(len(l))
