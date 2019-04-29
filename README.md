@@ -46,4 +46,4 @@ To obtain the datasets which were used in the scope of the project, enter the "d
 
 ### External libraries
 
-All the external libraries are listed in requirements.txt
+All the external libraries are listed in requirements.txt. To install them, run "pip install -r requirements.txt" in a terminal.
