@@ -43,3 +43,7 @@ The best way to run the code is to use the Jupyter Notebook. Notebook demonstrat
 ### Real-life data which was used for performance analysis:
 
 To obtain the datasets which were used in the scope of the project, enter the "data" folder, open the terminal and run script "downlodad_data.sh". The script was tested on Ubuntu 16.04. To run this script successfully, you must have sufficient available storage. In addition, you must have the permissions to install package "mmv - Move/Copy/Append/Link multiple files" which will be used to rearrange downloaded data. Installation included in the downloading script.
+
+### External libraries
+
+All the external libraries are listed in requirements.txt
