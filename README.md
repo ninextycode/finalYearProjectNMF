@@ -1,5 +1,5 @@
 # Final Year Project
-## Nonnegative Matrix Factrization(NMF)
+## Nonnegative Matrix Factorization(NMF)
 
 
 ### The source code structure:
