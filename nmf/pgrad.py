@@ -5,6 +5,11 @@ from time import time as get_time
 from itertools import count
 
 
+# NMF algorithm which aims to minimise Frobenius norm of the difference
+# between the original data and the data reconstructed from the factorization
+# using the projected gradient descent approach to improve factorization
+# postfix "_subproblems" indicates that gradient descent is used inside subroutines 
+# to iteratively find optimal factorisation terms 
 def factorize_Fnorm_subproblems(V, inner_dim,
                                 max_steps, epsilon=0, time_limit=np.inf,
                                 record_errors=False, W_init=None, H_init=None):
@@ -53,7 +58,7 @@ def factorize_Fnorm_subproblems(V, inner_dim,
     else:
         return W, H
 
-
+# subroutine which finds an optimal term when the other term is fixed
 def pgd_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
     H_new = H
     alpha = 1
@@ -85,7 +90,8 @@ def pgd_subproblem_step(WtW, H, dF, alpha,
     C = pgd_subproblem_step_condition(WtW, H, H_new, dF)
 
     should_increase = C <= 0
-
+    
+    # search for the best gradient descent step
     while max_a >= alpha >= min_a:
         if should_increase:
             alpha = alpha / beta
@@ -122,7 +128,7 @@ def pgd_subproblem_step_condition_not_simplified(V, W, H_old, H_new, dF, sigma=0
     return C
 
 
-# Fnorm = || V - WH || ^ 2
+# derivative of Fnorm = || V - WH || ^ 2 with respect to H
 def dFnorm_H(WtV, WtW, H):
     return WtW @ H - WtV
 
@@ -146,6 +152,12 @@ def project(A):
     return np.clip(A, 0, np.inf)
 
 
+# NMF algorithm which aims to minimise Frobenius norm of the difference
+# between the original data and the data reconstructed from the factorization
+# using the gradient descent approach to improve factorization
+# postfix "_direct" indicates that gradient descent is used with respect to 
+# both terms of the factorization simultaneously
+# Performance of this approach is worse than of the "_subproblems" alternative
 def factorize_Fnorm_direct(V, inner_dim,
                            max_steps, epsilon=0, time_limit=np.inf,
                            record_errors=False, W_init=None, H_init=None):

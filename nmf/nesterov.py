@@ -5,7 +5,9 @@ from time import time as get_time
 from nmf.mult import update_empty_initials
 from itertools import count
 
-
+# NMF algorithm which aims to minimise Frobenius norm of the difference
+# between the original data and the data reconstructed from the factorization
+# by iteratively using Nesterov gradient descent to improve factorization
 def factorize_Fnorm(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False, W_init=None, H_init=None):
@@ -53,7 +55,7 @@ def factorize_Fnorm(V, inner_dim,
     else:
         return W, H
 
-
+# subroutine where gradient descend is applied
 def nesterov_subproblem_H(V, W, H, min_pgrad, n_maxiter=1000):
     a = 1
     WtW = W.T @ W

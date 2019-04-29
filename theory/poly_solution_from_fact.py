@@ -1,6 +1,6 @@
 import numpy as np
 
-# block S corresponds to the product
+# block S corresponds to the product constraint
 def solution_from_factorization_s_one_block(terms, s_idx, variables):
     mask = np.full(terms[0].shape, False, dtype=bool)
     mask[:, :] = False
@@ -15,7 +15,7 @@ def solution_from_factorization_s_one_block(terms, s_idx, variables):
         variables[2]: s[4,0],
     }
 
-# block P corresponds to the linear combination 
+# block P corresponds to the linear combination constraint
 def solution_from_factorization_p_one_block(terms, p_idx, variables):
     mask = np.full(terms[0].shape, False, dtype=bool)
     mask[:, :] = False

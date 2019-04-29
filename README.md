@@ -15,10 +15,10 @@
   * \* analogous to the nmf folder *
 
 * performance
-  * performance_eval_func - functions used for performance evaluation and comparison
+  * performance_eval_func - functions used for performance evaluation and visualisation of the performance of algorithms
 
 * read_data
-  * reading.py - functions to read downloaded real-life data into memory
+  * reading.py - functions used to read downloaded real-life data into memory as well as to transform 2d image sets into rectangular matrices and vice versa
 
 * theory - Scripts related to the theoretical part of the project. Focus on the connection between NMF and finding the roots of a polynomial 
   * fact_of_transform.py - for each polynomial equation, a corresponding nonnegative matrix can be constructed. The functions of this file can be used to create an exact nonnegative factorisation of the particular matrix, given the solution to the corresponding polynomial(solution restricted to [0, 1] interval)

@@ -7,6 +7,9 @@ import torch
 from itertools import count
 
 
+# GPU version of the NMF based on the Nesterov gradient descent
+# see /nmf/nesterov.py for further details
+
 def factorize_Fnorm(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False,

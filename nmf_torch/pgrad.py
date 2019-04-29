@@ -6,6 +6,9 @@ from time import time as get_time
 from itertools import count
 
 
+# GPU version of the NMF based on the projected gradient descent
+# see /nmf/pgrad.py for further details
+
 def factorize_Fnorm_subproblems(V, inner_dim,
                                 max_steps, epsilon=0, time_limit=np.inf,
                                 record_errors=False, W_init=None, H_init=None):

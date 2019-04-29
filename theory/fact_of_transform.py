@@ -5,7 +5,7 @@ from itertools import zip_longest
 import matplotlib.pyplot as plt
 
 
-
+# given root of the polynomial and a corresponding matrix, constrict factorization of this matrix
 def create_factorization_var_gadgets(num_mat, g1_indices_by_var, solution, fact_data):
     for var, v1, v2 in fact_data["positive"]["s"]["expanded_vars"]:
         solution[var] = solution[v1] * solution[v2]
@@ -56,6 +56,10 @@ def create_factorization_var_gadgets(num_mat, g1_indices_by_var, solution, fact_
     return terms
 
 
+# create factorization part which corresponds to the "variable gadget" part of the matrix
+# which was constructed to encode variables
+# "_strong_vg" - strong variable gadget
+# "strong" - capable of encoding multiple instances of variables instead of just one
 def create_factorization_strong_vg(num_of_occurencies, val, var_range, shape, g1_idx):
     terms = []
     new_terms = get_top_corner_terms_vg(num_of_occurencies, val, var_range, shape, g1_idx)
@@ -147,7 +151,7 @@ def create_top_left_factorization_simple_vg(a, l, shape, idx):
     ])
     return terms
 
-
+# create factorization part which corresponds to the product of variables
 def create_factorization_s(val1, val2, shape, idx):
     terms = []
     idx_block_1 = [idx[0][:5, 6:], idx[1][:5, 6:]]
@@ -167,7 +171,7 @@ def create_factorization_s(val1, val2, shape, idx):
 
     return terms
 
-
+# create factorization part which corresponds to the linear combination of terms
 def create_factorization_p(coeffs_vals_list, shape, idx):
     t = len(coeffs_vals_list)
     sum_val = 0

@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from libtiff import TIFF
 from PIL import Image
 
-
+# read reuters text database
 def read_reuters21578(dir, vectorizer=TfidfVectorizer()):
     files = os.listdir(dir)
     files = [os.path.join(dir, f) for f in sorted(files) if re.match(r"reut2.*\.sgm", f)]
@@ -23,7 +23,7 @@ def read_reuters21578(dir, vectorizer=TfidfVectorizer()):
     X = vectorizer.fit_transform(stories)
     return X
 
-
+# read hyperspectral images
 def read_indian_pines(dir):
     def read_tiff_func(path):
         try:
@@ -49,6 +49,7 @@ def read_indian_pines(dir):
     )
 
 
+# read facial image database 
 def read_face_images(dir):
     files = os.listdir(dir)
     files = [os.path.join(dir, f) for f in sorted(files)]
@@ -60,18 +61,19 @@ def read_face_images(dir):
     return faces
 
 
+#transform a set of images into a rectangular matrix where individual rows correspond to individual images 
 def unroll_images(data):
     original_shape = data.shape
     return data.reshape(original_shape[0], -1), (original_shape[1], original_shape[2])
 
-
+#transform rectangular matrix  where individual rows correspond to individual images into the set of images
 def roll_images(data, original_image_shape):
     if data.ndim == 1:
         return data.reshape(*original_image_shape)
     else:
         return data.reshape(-1, *original_image_shape)
 
-
+# concatenate small images into one big grid 
 def images_matrix_grid(data, grid_shape):
     imrows = [
         np.hstack([data[i, :, :]
@@ -81,6 +83,8 @@ def images_matrix_grid(data, grid_shape):
     return np.vstack(imrows)
 
 
+# text to vector transformer, based on sklearn library classes
+# records the last set of texts which it receives into an internal array "last_data"
 class HashTfidfVectoriser:
     def __init__(self, n_features):
         self.hashing_vectoriser = HashingVectorizer(n_features=n_features, alternate_sign=False)

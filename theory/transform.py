@@ -13,15 +13,26 @@ variable_gadget_mat_1 = np.array([
     [0., 1., 0., 0., 1.]
 ])
 
+
+# function which takes polynomial, represented by a string, as a parameter,
+# and generates an "incomplete" (which means, containing variables) matrix
+# such that the nonnegative factorisation of such matrix of a certain rank is equivalent to 
+# the root of the polynomial restricted to [0, 1] interval
+# Matrix with variables is represented by 3 objects:
+# a matrix of number entries, a matrix of variable entries, and a dictionary which carries 
+# information about the variables
 def matrix_from_formula(formula):
     expanded_formula = sym.expand(formula)
     print(expanded_formula)
     formula_list = expanded_expression_to_list(expanded_formula)
+    # polynomial is separated into 2 sets of terms with positive and negative coefficients
+    # and then treated as 2 polynomials with positive coefficients only
+    # which must be equal to each other
     positive_side = [t for t in formula_list if t[0] > 0]
     negative_side = [(-t[0], t[1]) for t in formula_list if t[0] < 0]
 
     l_max = np.sum([t[0] for t in positive_side]) + np.sum([t[0] for t in negative_side])
-
+    
     pos_mats_num_s, pos_mats_var_s, \
     pos_mat_p_num, pos_mat_p_var, \
     pos_ranges, pos_fact_data = matrices_for_poly_with_positive_coef(positive_side, "_L", l_max, starting_index=0)
@@ -93,7 +104,8 @@ def matrix_from_formula(formula):
 
     return final_matrix_num, final_matrix_var, int(expected_rank), fact_data
 
-
+# generate diagonal blocks which correspond to the products and linear combination
+# of polynomial terms
 def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
                                          sum_upper_bound, starting_index=0):
     matrices_num_s = []
@@ -151,7 +163,7 @@ def matrices_for_poly_with_positive_coef(formula_list, var_result_name,
            mat_p_num, mat_p_var, \
            ranges, factorization_data
 
-
+# generate diagonal blocks which correspond to the product of 2 variables in a polynomial 
 def matrices_for_vars_prodct(vars_list, idx):
     if len(vars_list) == 0:
         return [], [], {}, None, []
@@ -185,7 +197,10 @@ def expanded_variables_names(variables, prefix):
             for j in range(2, len(variables))]
     return us
 
-
+# sympy library allows to open the brackets and to construct a tree of the polynomial
+# this function takes the corresponding tree and transforms it into a list of the form
+# [[coef_1, [var_1 ... var_n]], [coef_2, [var_1 ... var_n]] ... ]
+# example: "2xy - y + z^2 - 1" is transformed into [ [2, [x, y]], [-1, [y]], [1, [z, z]], [-1, []] ]
 def expanded_expression_to_list(formula):
     if formula.is_symbol:
         return [(1.0, [str(formula)])]
@@ -221,7 +236,7 @@ def term_to_tuple(term):
 
     return coef, vars
 
-
+# function which removes variables from the matrix by iteratively calling a corresponding subroutine
 def remove_variables(num_mat, var_mat, ranges, expected_rank):
     g1_indices_by_var = {}
 
@@ -242,6 +257,8 @@ def remove_variables(num_mat, var_mat, ranges, expected_rank):
     return num_mat, var_mat, int(expected_rank_expanded), g1_indices_by_var
 
 
+# an implementation of the "variable gadget" subroutine, which was introduced in 
+# [arXiv:1606.09068v1], proposition 5, and which is explained in my final report
 def remove_variable_no_rearrangement(num, var, ranges, v):
     num = num.astype(float)
     min_v, max_v = ranges[v]
@@ -515,6 +532,8 @@ def apply_variable_gadget_to_single(num, var, top_left, M):
 
     return num, var
 
+
+# the following code was used for testing and debugging  
 
 from multiprocessing import Pool
 from nmf.pgrad import factorize_Fnorm_subproblems

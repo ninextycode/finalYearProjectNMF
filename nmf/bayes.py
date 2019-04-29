@@ -9,6 +9,7 @@ from nmf.pgrad import factorize_Fnorm_subproblems
 from itertools import count
 
 
+# Bayesian NMF algorithm where parameters are estimated by the Iterated Conditional Modes method 
 def factorize_ICM(V, inner_dim,
                   max_steps, min_err=0, time_limit=np.inf,
                   record_errors=False,
@@ -72,6 +73,7 @@ def get_variance_ICM(V_shape, err, shape_prior=0, scale_prior=0):
            (V_shape[0] * V_shape[1] / 2 + shape_prior + 1)
 
 
+# Bayesian NMF algorithm where parameters are estimated by the means of Gibbs sampling.  
 def factorize_Gibbs(V, inner_dim, n_steps=80000,
                     record_errors=False,
                     W_prior=None, H_prior=None,
@@ -121,7 +123,7 @@ def update_W_Gibbs(VHt, HHt, W, W_prior, variance):
                 - (W @ HHt[:, n] - W[:, [n]] @ HHt[[n], n])\
                 - variance / W_prior[:, n]
                 ) / max(HHt[n, n], 1e-8)
-        W[:, n] = sample_rectified_gaussian(mean,
+        W[:, n] = sample_rectified_gaussian_2(mean,
                                             variance / HHt[n, n],
                                             1 / W_prior[:, n])
     return W
@@ -131,26 +133,6 @@ def sample_variance_Gibbs(Vshape, err2, shape_prior, scale_prior):
     shape = Vshape[0] * Vshape[1] / 2 + shape_prior + 1
     scale = err2 / 2 + scale_prior
     return invgamma.rvs(a=shape, scale=scale)
-
-
-def sample_rectified_gaussian(m, s2, l):
-    # Author: Mikkel N.Schmidt, DTU Informatics, Technical University of Denmark
-    # Copyright Mikkel N.Schmidt, ms@it.dk, www.mikkelschmidt.dk
-
-    A = (l*s2-m)/(np.sqrt(2*s2))
-    a = A>26
-    x = np.zeros(m.shape)
-
-    y = np.random.rand(*m.shape)
-    x[a] = - np.log(y[a]) / ((l[a] * s2 - m[a]) / s2)
-
-    R = erfc(np.abs(A[~a]))
-    x[~a] = erfcinv(y[~a] * R - (A[~a]<0) * (2 * y[~a] + R - 2)) * np.sqrt(2*s2)+m[~a]-l[~a] * s2
-
-    x[np.isnan(x)]= 0
-    x[ x<0 ] = 0
-    x[np.isinf(x)] = 0
-    return x
 
 
 # mu - l * s^2 + s * sqrt(2) * InverseErf(y - erf((mu - l s^2)/(s * sqrt(2))) + y * erf( (m - l s^2)/(s * sqrt(2)) ) )

@@ -4,7 +4,8 @@ from nmf.pgrad import project, dFnorm_H, dH_projected_norm2, pgd_subproblem_step
 from nmf.mult import update_empty_initials
 from time import time as get_time
 
-
+# an unsuccessful attempt to implement a NMF algorithm based on [https://doi.org/10.1016/j.neunet.2018.03.003] paper
+# the code in this file does not produce any meaningful result, excluded from the analysis
 def factorize_Fnorm(V, inner_dim, n_steps=10000, epsiolon=1e-6,
                     record_errors=False, W_init=None, H_init=None):
     W, H = update_empty_initials(V, inner_dim, W_init, H_init)

@@ -16,7 +16,7 @@ def get_random_lowrank_matrix(m, r, n):
 
 
 def get_time_ratio(errors_0, errors_1):
-    # Rartio of times to reach certain cost function value
+    # Ratio of times to reach certain cost function value
     max_log_error = min(np.max(np.log(errors_0[1:, 1])),
                         np.max(np.log(errors_1[1:, 1])))
     min_log_error = max(np.min(np.log(errors_0[:, 1])),
@@ -35,7 +35,7 @@ def get_time_ratio(errors_0, errors_1):
         return np.array([[], []]).T
 
 def get_time_difference(errors_0, errors_1):
-    # Rartio of times to reach certain cost function value
+    # Ratio of times to reach certain cost function value
     max_log_error = min(np.max(np.log(errors_0[1:, 1])),
                         np.max(np.log(errors_1[1:, 1])))
     min_log_error = max(np.min(np.log(errors_0[:, 1])),
@@ -51,6 +51,9 @@ def get_time_difference(errors_0, errors_1):
     return np.array([error_space, time_differences]).T
 
 
+# function which gets a dictionary of NMF algorithms as input
+# and iteratively runs them from the same initial factorization
+# to collect the data on their performance 
 def compare_performance(V, inner_dim, time_limit,
                         W_init, H_init,
                         algo_dict_to_test,
@@ -85,6 +88,8 @@ def plot_performance_dict(errors, ax, colors=colors_default):
     ax.legend()
 
 
+# a wrapper which takes a GPU algorithm as an input and returns a
+# function which automatically handles data transfer between GPU and CPU
 def torch_algo_wrapper(algo, device="cuda"):
     def algo_w(*args, **kwargs):
         kwargs["V"] = torch.tensor(kwargs["V"], device=device)

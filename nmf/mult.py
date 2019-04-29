@@ -4,6 +4,8 @@ from time import time as get_time
 from itertools import count
 
 
+# a piece of code which does nothing if the starting point for the factorization algorithm is provided
+# if the starting point is not provided, initial factorization is generated randomly
 def update_empty_initials(V, inner_dim, W_init, H_init):
     if W_init is None:
         W = 1 - np.random.rand(V.shape[0], inner_dim)
@@ -18,7 +20,8 @@ def update_empty_initials(V, inner_dim, W_init, H_init):
         H = H_init
     return W, H
 
-
+# the multiplicative NMF algorithm which aims to minimise Frobenius norm of the difference
+# between the original data and the data reconstructed from the factorization  
 def factorize_Fnorm(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False,
@@ -34,7 +37,8 @@ def factorize_Fnorm(V, inner_dim,
                      epsilon=epsilon,
                      time_limit=time_limit)
 
-
+# the  multiplicative algorithm which aims to minimise Kullback–Leibler divergence between
+# the original data and the data reconstructed from the factorization 
 def factorize_KLdiv(V, inner_dim,
                     max_steps, epsilon=0, time_limit=np.inf,
                     record_errors=False,

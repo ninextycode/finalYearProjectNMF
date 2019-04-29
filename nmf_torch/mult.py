@@ -5,6 +5,9 @@ from itertools import count
 import torch
 
 
+# GPU version of the multiplicative NMF algorithm
+# see /nmf/mult.py for further details
+
 def update_empty_initials(V, inner_dim, W_init, H_init):
     if W_init is None:
         W = 1 - torch.rand(V.shape[0], inner_dim)
